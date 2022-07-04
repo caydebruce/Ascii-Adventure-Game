@@ -10,7 +10,7 @@ START_ELX = 5
 START_GLD = 50
 START_X = 0
 START_Y = 0
-STAT_LEN = 9
+STAT_LEN = 10
 POT_HEAL = 5
 ELX_HEAL = 10
 SMTHNG = 3
@@ -24,6 +24,7 @@ ELX = START_ELX
 GLD = START_GLD
 x = START_X
 y = START_Y
+operating_system = ""
 
 #Game starting variables
 run = True
@@ -36,6 +37,7 @@ standing = True
 buy = False
 speak = False
 boss = False
+select = False
 
 #map of the corrupted lands 5x5
 map = [
@@ -114,18 +116,18 @@ mobs = {
 }
 
 current_tile = map[y][x]
-print(current_tile)
 name_of_tile = biome[current_tile]["t"]
-print(name_of_tile)
 enemy_tile = biome[current_tile]["e"]
-print(enemy_tile)
-
 
 def clear():
-    os.system('clear')
+
+    if operating_system == "MAC":
+        os.system('clear')
+    elif operating_system == "WIN":
+        os.system('cls')
 
 def divide():
-    print('++================================================================++')
+    print('================================================================')
 
 def save():
     stats = [
@@ -137,8 +139,8 @@ def save():
         str(GLD),
         str(x),
         str(y),
-        str(key)
-
+        str(key),
+        str(operating_system)
     ]
 
     f = open("load.txt", "w")
@@ -167,7 +169,6 @@ def battle():
     hpmax = hp
     atk = mobs[enemy]["dg"]
     g = mobs[enemy]["gd"]
-
 
     while fight:
         clear()
@@ -343,10 +344,10 @@ while run:
     while menu:
         clear()
         divide()
-        print("1, NEW GAME")
-        print("2, LOAD GAME")
-        print("3, RULES")
-        print("4, QUIT")
+        print("1 - NEW GAME")
+        print("2 - LOAD GAME")
+        print("3 - RULES")
+        print("4 - QUIT")
         divide()
 
         if rules:
@@ -362,6 +363,26 @@ while run:
 
         if choice == "1":
             clear()
+
+            select = True
+            while select:
+                clear()
+                print("What system are you playing on?")
+                print("1 - MAC")
+                print("2 - WIN")
+                divide()
+                choice = input("# ")
+                if choice == "1":
+                    operating_system = "MAC"
+                    print("You chose MAC as your system!")
+                    select = False
+                if choice == "2":
+                    operating_system = "WIN"
+                    print("You chose WIN as your system!")
+                    select = False
+                input("> ")
+
+
             print("What is your name Hero?")
             hero_name = input("# ")
             menu = False
@@ -380,6 +401,7 @@ while run:
                     x = int(load_list[6][:-1])
                     y = int(load_list[7][:-1])
                     key = bool(load_list[8][:-1])
+                    operating_system = str([9][:-1])
                     clear()
                     print(hero_name, ": HP =", HP, "ATK =", ATK, "Gold =", GLD)
                     print("welcome back, " + hero_name + "!")
@@ -413,6 +435,7 @@ while run:
             divide()
             print("LOCATION: " + biome[map[y][x]]["t"])
             divide()
+
             print("NAME: " + hero_name)
             print("HP: " + str(HP) + "/" + str(HP_MAX))
             print("ATK: " + str(ATK))
