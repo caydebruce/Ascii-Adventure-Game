@@ -247,6 +247,7 @@ def battle():
             run = False
             print("GAME OVER")
             input("> ")
+            clear()
         
         if hp <= 0:
             print(hero_name + " defeated the " + enemy + "!")
@@ -403,7 +404,6 @@ while run:
                     print("You chose WIN as your system!")
                     select = False
                 input("> ")
-
             clear()
             print("What is your name Hero?")
             hero_name = input("# ")
@@ -486,13 +486,13 @@ while run:
 
             #Draws play options
             if y > 0:
-                print("W - NORTH")
+                print("W - \u25B2 " + biome[map[y - 1][x]]["t"])
             if x > 0:
-                print("A - WEST")
+                print("A - \u25C0 " + biome[map[y][x - 1]]["t"])
             if y < y_len:
-                print("S - SOUTH")
+                print("S - \u25BC " + biome[map[y + 1][x]]["t"])
             if x < x_len:
-                print("D - EAST")
+                print("D - \u25B6 " + biome[map[y + 1][x]]["t"])
             if POT > 0:
                 print("5 - use POTION")
             if ELX > 0:
