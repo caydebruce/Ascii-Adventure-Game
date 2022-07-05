@@ -54,7 +54,7 @@ biome = {
     ",": {
         "t": "PLAINS",
         "e": 33,
-        "m": ["Skeleton", "Goblin", "Orc"]
+        "m": ["Skeleton", "Goblin"]
 
     },
     ".": {
@@ -65,7 +65,7 @@ biome = {
     ";": {
         "t": "TALL GRASS",
         "e": 30,
-        "m": ["Skeleton", "Goblin", "Orc"]
+        "m": ["Skeleton", "Goblin"]
     },
     "A": {
         "t": "ACADEMY",
@@ -90,7 +90,7 @@ biome = {
     "K": {
         "t": "KING",
         "e": 0,
-        "m": 0
+        "m": []
     }
 }
 
@@ -180,6 +180,7 @@ def battle():
     hpmax = hp
     atk = random.choice(mobs[enemy]["dg"])
     g = random.choice(mobs[enemy]["gd"])
+    boss = False
 
     while fight:
         clear()
@@ -332,7 +333,7 @@ def king():
             key = True
         
         divide()
-        print("1 -LEAVE")
+        print("1 - LEAVE")
         divide()
         choice = input("# ")
         if choice == "1":
@@ -345,7 +346,7 @@ def academy():
         clear()
         divide()
         print("You approach the gates of the Academy")
-        print("What will you do?")
+        print("The gates require a key. What will you do?")
         divide()
         if key:
             print("1 - USE KEY")
@@ -354,7 +355,7 @@ def academy():
 
         choice = input("# ")
 
-        if choice == "1":
+        if choice == "1" and key:
             fight = True
             battle()
         elif choice == "2":
