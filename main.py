@@ -394,15 +394,17 @@ while run:
                 choice = input("# ")
                 if choice == "1":
                     operating_system = "MAC"
+                    clear()
                     print("You chose MAC as your system!")
                     select = False
                 if choice == "2":
                     operating_system = "WIN"
+                    clear()
                     print("You chose WIN as your system!")
                     select = False
                 input("> ")
 
-
+            clear()
             print("What is your name Hero?")
             hero_name = input("# ")
             menu = False
