@@ -53,71 +53,82 @@ x_len = len(map[0]) - 1
 biome = {
     ",": {
         "t": "PLAINS",
-        "e": True
+        "e": 33,
+        "m": ["Skeleton", "Goblin", "Orc"]
+
     },
     ".": {
         "t": "DESERT",
-        "e": True
+        "e": 25,
+        "m": ["Skeleton", "Mummy"]
     },
     ";": {
         "t": "TALL GRASS",
-        "e": True
+        "e": 30,
+        "m": ["Skeleton", "Goblin", "Orc"]
     },
     "A": {
         "t": "ACADEMY",
-        "e": False
+        "e": 0,
+        "m": []
     },
     "M": {
         "t": "MOUNTAINS",
-        "e": True
+        "e": 100,
+        "m": ["Orc"]
     },
     "T": {
         "t": "FOREST",
-        "e": True
+        "e": 75,
+        "m": ["Skeleton", "Goblin", "Orc"]
     },
     "S": {
         "t": "MERCHANT",
-        "e": False
+        "e": 0,
+        "m": []
     },
     "K": {
         "t": "KING",
-        "e": False
+        "e": 0,
+        "m": 0
     }
 }
 
-e_list = ["Skeleton", "Goblin", "Orc"]
-
 mobs = {
     "Skeleton": {
-        "hp": random.randint(3,6),
-        "dg": 2,
-        "gd": random.randint(4,7)
+        "hp": [5,5,5,5,6,4],
+        "dg": [2],
+        "ac": 60,
+        "gd": [4,4,4,5,5,6,10]
     },
     "Goblin": {
-        "hp": 10,
-        "dg": 5,
-        "gd": 12
+        "hp": [10],
+        "dg": [5],
+        "ac": 80,
+        "gd": [12]
     },
     "Orc": {
-        "hp": 35,
-        "dg": 6,
-        "gd": 12,
+        "hp": [15,20,35],
+        "dg": [6],
+        "ac": 90,
+        "gd": [12,15,20]
     },
-    "Dark Knight": {
-        "hp": 40,
-        "dg": 10,
-        "gd": 30
+    "Mummy": {
+        "hp": [40],
+        "dg": [10],
+        "ac": 100,
+        "gd": [30]
     },
     "Evil Wizard": {
-        "hp": 60,
-        "dg": 15,
-        "gd": 100
+        "hp": [60],
+        "dg": [15],
+        "ac": 100,
+        "gd": [100]
     }
 }
 
 current_tile = map[y][x]
 name_of_tile = biome[current_tile]["t"]
-enemy_tile = biome[current_tile]["e"]
 
 def clear():
 
@@ -162,13 +173,13 @@ def battle():
     global fight, play, run, HP, POT, ELX, GLD, boss
 
     if not boss:
-        enemy = random.choice(e_list)
+        enemy = random.choice(biome[map[y][x]]["m"])
     else:
         enemy = "Evil Wizard"
-    hp = mobs[enemy]["hp"]
+    hp = random.choice(mobs[enemy]["hp"])
     hpmax = hp
-    atk = mobs[enemy]["dg"]
-    g = mobs[enemy]["gd"]
+    atk = random.choice(mobs[enemy]["dg"])
+    g = random.choice(mobs[enemy]["gd"])
 
     while fight:
         clear()
@@ -177,8 +188,14 @@ def battle():
         divide()
         print(enemy + "'s HP: " + str(hp) + "/" + str(hpmax))
         print(hero_name + "'s HP: " + str(HP) + "/" + str(HP_MAX))
-        print("POTIONS: " + str(POT))
-        print("ELIXERS: " + str(ELX))
+        print("POTIONS: ", end="")
+        for i in range(POT):
+            print("() ", end="")
+        print()
+        print("ELIXERS: ", end="")
+        for i in range(ELX):
+            print("[] ", end="")
+        print()
         divide()
         print("1 - ATTACK")
         if POT > 0:
@@ -193,8 +210,11 @@ def battle():
             hp -= ATK
             print(hero_name + " dealt " + str(ATK) + " damage to the " + enemy + ".")
             if hp > 0:
-                HP -= atk
-                print(enemy + " dealt " + str(atk) + " damage to " + hero_name + ".")
+                if random.randint(0,100) <= mobs[enemy]["ac"]:
+                    HP -= atk
+                    print(enemy + " dealt " + str(atk) + " damage to " + hero_name + ".")
+                else:
+                    print(enemy + " missed!")
             input("> ")
         
         elif choice == "2":
@@ -401,7 +421,7 @@ while run:
                     x = int(load_list[6][:-1])
                     y = int(load_list[7][:-1])
                     key = bool(load_list[8][:-1])
-                    operating_system = str([9][:-1])
+                    operating_system = str(load_list[9][:-1])
                     clear()
                     print(hero_name, ": HP =", HP, "ATK =", ATK, "Gold =", GLD)
                     print("welcome back, " + hero_name + "!")
@@ -426,42 +446,61 @@ while run:
         save() #autosave
         clear()
         
-        if not standing and biome[map[y][x]]["e"]:
-            if random.randint(0, 100) <= 30:
+        if not standing and random.randint(0, 100) <= biome[map[y][x]]["e"]:
                 fight = True
                 battle()
 
         if play:
+
+            #Draws map
+            clear()
             divide()
             print("LOCATION: " + biome[map[y][x]]["t"])
             divide()
+            for r in range(len(map)):
+                print("| ", end="")
+                for c in range(len(map[r])):
+                    if r == y and c == x:
+                        print("@", end = " ")
+                    else:
+                        print(map[r][c], end = " ")
+                print("|")
+            divide()
 
+            #Draws relevant stats
             print("NAME: " + hero_name)
             print("HP: " + str(HP) + "/" + str(HP_MAX))
             print("ATK: " + str(ATK))
-            print("POTIONS: " + str(POT))
-            print("ELIXERS: " +str(ELX))
+            print("POTIONS: ", end="")
+            for i in range(POT):
+                print("() ", end="")
+            print()
+            print("ELIXERS: ", end="")
+            for i in range(ELX):
+                print("[] ", end="")
+            print()
             print("GOLD: " + str(GLD))
-            print("COORDS: ", x, y)
             divide()
+
+            #Draws play options
             if y > 0:
-                print("1 - NORTH")
-            if x < x_len:
-                print("2 - EAST")
-            if y < y_len:
-                print("3 - SOUTH")
+                print("W - NORTH")
             if x > 0:
-                print("4 - WEST")
-            print("0 - SAVE AND QUIT")
+                print("A - WEST")
+            if y < y_len:
+                print("S - SOUTH")
+            if x < x_len:
+                print("D - EAST")
             if POT > 0:
                 print("5 - use POTION")
             if ELX > 0:
                 print("6 - use ELIXER")
             if map[y][x] == "S" or map[y][x] == "K" or map[y][x] == "A":
                 print("7 - ENTER")
+            print("0 - SAVE AND QUIT")
             divide()
 
-            dest = input("# ")
+            dest = input("# ").upper()
 
         if dest == "0":
             play = False
@@ -469,19 +508,19 @@ while run:
             save() #auto quit save
         
         #actions
-        if dest == "1":
+        if dest == "W":
             if y > 0:
                 y -= 1
                 standing = False
-        elif dest == "2":
+        elif dest == "D":
             if x < x_len:
                 x += 1
                 standing = False
-        elif dest == "3":
+        elif dest == "S":
             if y < y_len:
                 y += 1
                 standing = False
-        elif dest == "4":
+        elif dest == "A":
             if x > 0:
                 x -= 1
                 standing = False
