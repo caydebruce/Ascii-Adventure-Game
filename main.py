@@ -492,7 +492,7 @@ while run:
             if y < y_len:
                 print("S - \u25BC " + biome[map[y + 1][x]]["t"])
             if x < x_len:
-                print("D - \u25B6 " + biome[map[y + 1][x]]["t"])
+                print("D - \u25B6 " + biome[map[y][x + 1]]["t"])
             if POT > 0:
                 print("5 - use POTION")
             if ELX > 0:
