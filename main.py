@@ -8,9 +8,13 @@ START_ATK = 3
 START_POT = 2
 START_ELX = 3
 START_GLD = 0
+START_EVA = 0
 START_X = 0
 START_Y = 0
-STAT_LEN = 11
+STAT_LEN = 12
+
+MAX_POT = 4
+MAX_ELX = 4
 POT_HEAL = 5
 ELX_HEAL = 10
 WEP_SMTH = 1
@@ -20,6 +24,7 @@ ARM_SMTH = 1
 HP = START_HP
 HP_MAX = START_HP_MAX
 ATK = START_ATK
+EVA = START_EVA
 POT = START_POT
 ELX = START_ELX
 GLD = START_GLD
@@ -163,7 +168,7 @@ mobs = {
         "ac": [100],
         "gd": [100],
         "rn": [0],
-        "ef": ["none", "fireball", "none"]
+        "ef": ["none", "fireball"]
     }
 }
 
@@ -186,6 +191,7 @@ def save():
         str(HP),
         str(HP_MAX),
         str(ATK),
+        str(EVA),
         str(POT),
         str(ELX),
         str(GLD),
@@ -245,17 +251,10 @@ def battle():
         clear()
         divide()
         print("A " + enemy + " wants to fight you!")
-        divide()
         print(enemy + "'s HP: " + str(hp) + "/" + str(hpmax))
-        print(hero_name + "'s HP: " + str(HP) + "/" + str(HP_MAX))
-        print("POTIONS: ", end="")
-        for i in range(POT):
-            print("() ", end="")
-        print()
-        print("ELIXERS: ", end="")
-        for i in range(ELX):
-            print("[] ", end="")
-        print()
+        print(enemy + "'s ATK: " + str(atk))
+        divide()  
+        draw_stats()
         divide()
         print("1 - ATTACK")
         if POT > 0:
@@ -330,9 +329,10 @@ def battle():
             fight = False
             GLD += g
             print("You found " + str(g) + " gold!")
-            if random.randint(1, 100) <= 30:
+            if random.randint(1, 100) <= 30 and POT < MAX_POT:
                 POT += 1
                 print("You've found a POTION!")
+
             if enemy == "Evil Wizard":
                 print("Congratulations! You've defeated the Evil Wizard!")
                 print("You have finished the game!")
@@ -343,7 +343,7 @@ def battle():
             clear()
  
 def shop():
-    global buy, GLD, POT, ELX, ATK, HP_MAX
+    global buy, GLD, POT, ELX, ATK, HP_MAX, MAX_POT, MAX_ELX
 
     while buy:
         clear()
@@ -361,20 +361,26 @@ def shop():
         choice = input("# ")
 
         if choice == "1":
-            if GLD >= 5:
-                POT += 1
-                GLD -= 5
-                print("You've bought a POTION!")
+            if POT == MAX_POT:
+                print("You can't carry any more POTIONS!")
             else:
-                print("Not enough gold!")
+                if GLD >= 5:
+                    POT += 1
+                    GLD -= 5
+                    print("You've bought a POTION!")
+                else:
+                    print("Not enough gold!")
             input("> ")
         elif choice == "2":
-            if GLD >= 8:
-                ELX += 1
-                GLD -= 8
-                print("You've bought an ELIXER!")
+            if ELX == MAX_ELX:
+                print("You can't carry any more ELIXERS!")
             else:
-                print("Not enough gold!")
+                if GLD >= 8:
+                    ELX += 1
+                    GLD -= 8
+                    print("You've bought an ELIXER!")
+                else:
+                    print("Not enough gold!")
             input("> ")
         elif choice == "3":
             if GLD >= 10:
@@ -441,8 +447,6 @@ def academy():
             boss = False
 
 def draw_map():
-    clear()
-    divide()
     print("LOCATION: " + biome[map[y][x]]["t"])
     divide()
     print("\u250C", end="")
@@ -461,12 +465,17 @@ def draw_map():
     for r in range(len(map) + 2):
         print("\u2500", end="")
     print("\u2518")
-    divide()
 
 def draw_stats():
     print("NAME: " + hero_name)
-    print("HP: " + str(HP) + "/" + str(HP_MAX))
-    print("ATK: " + str(ATK))
+    print("HP: " + str(HP) + "/" + str(HP_MAX), end="     ")
+    for i in range(10):
+        if i/10 < HP/10:
+            print("\u2588", end="")
+        else:
+            print("_", end="")
+    print()
+    print("ATK/EVA: " + str(ATK) + " / " + str(EVA))
     print("POTIONS: ", end="")
     for i in range(POT):
         print("() ", end="")
@@ -475,8 +484,7 @@ def draw_stats():
     for i in range(ELX):
         print("[] ", end="")
     print()
-    print("GOLD: " + str(GLD))
-    divide()   
+    print("GOLD: " + str(GLD))  
  
 def draw_actions():
     if y > 0:
@@ -488,13 +496,12 @@ def draw_actions():
     if x < x_len:
         print("D - \u25B6 " + biome[map[y][x + 1]]["t"])
     if POT > 0:
-        print("1 - use POTION")
+        print("2 - use POTION")
     if ELX > 0:
-        print("2 - use ELIXER")
+        print("3 - use ELIXER")
     if map[y][x] == "S" or map[y][x] == "K" or map[y][x] == "A":
         print("E - ENTER")
     print("0 - SAVE AND QUIT")
-    divide()
     
 while run:
     while menu:
@@ -555,13 +562,14 @@ while run:
                     HP = int(load_list[1][:-1])
                     HP_MAX = int(load_list[2][:-1])
                     ATK = int(load_list[3][:-1])
-                    POT = int(load_list[4][:-1])
-                    ELX = int(load_list[5][:-1])
-                    GLD = int(load_list[6][:-1])
-                    x = int(load_list[7][:-1])
-                    y = int(load_list[8][:-1])
-                    key = bool(load_list[9][:-1])
-                    operating_system = str(load_list[10][:-1])
+                    EVA = int(load_list[4][:-1])
+                    POT = int(load_list[5][:-1])
+                    ELX = int(load_list[6][:-1])
+                    GLD = int(load_list[7][:-1])
+                    x = int(load_list[8][:-1])
+                    y = int(load_list[9][:-1])
+                    key = bool(load_list[10][:-1])
+                    operating_system = str(load_list[11][:-1])
                     clear()
                     print(hero_name, ": HP =", HP, "ATK =", ATK, "Gold =", GLD)
                     print("welcome back, " + hero_name + "!")
@@ -591,9 +599,14 @@ while run:
             battle()
 
         if play:
+            clear()
+            divide()
             draw_map()
+            divide()
             draw_stats()
+            divide()
             draw_actions()
+            divide()
 
             # Get input for actions
             dest = input("# ").upper()
@@ -620,7 +633,7 @@ while run:
             if x > 0:
                 x -= 1
                 standing = False
-        elif dest == "1":
+        elif dest == "2":
             if POT > 0:
                 heal(POT_HEAL)
                 POT -= 1
@@ -628,7 +641,7 @@ while run:
                 print("You are out of POTIONS!")
             input("> ")
             standing = True
-        elif dest == "2":
+        elif dest == "3":
             if ELX > 0:
                 heal(ELX_HEAL)
                 ELX -= 1
