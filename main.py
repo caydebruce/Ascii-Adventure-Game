@@ -2,18 +2,19 @@ import os
 import random
 
 #magic numbers
-START_HP = 30
-START_HP_MAX = 500
-START_ATK = 5
-START_POT = 5
-START_ELX = 5
-START_GLD = 50
+START_HP = 10
+START_HP_MAX = 10
+START_ATK = 3
+START_POT = 2
+START_ELX = 3
+START_GLD = 0
 START_X = 0
 START_Y = 0
-STAT_LEN = 10
+STAT_LEN = 11
 POT_HEAL = 5
 ELX_HEAL = 10
-SMTHNG = 3
+WEP_SMTH = 1
+ARM_SMTH = 1
 
 #Hero starting stats
 HP = START_HP
@@ -43,87 +44,126 @@ select = False
 map = [
     [";", ",", ".", "S", "."],
     [";", ";", ",", ".", "."],
-    [",", ",", "T", ".", "."],
-    [",", "T", "T", ".", "M"],
+    ["~", "~", "T", ".", "."],
+    ["~", "T", "T", ".", "M"],
     ["T", "K", "T", "M", "A"]]
 
 y_len = len(map) - 1
 x_len = len(map[0]) - 1
 
 biome = {
+    "~": {
+        "t": "RIVER",
+        "e": 0,
+        "m": ["Error"],
+        "w": False
+    },
     ",": {
         "t": "PLAINS",
         "e": 33,
-        "m": ["Skeleton", "Goblin"]
-
+        "m": ["Skeleton", "Goblin"],
+        "w": True
     },
     ".": {
         "t": "DESERT",
-        "e": 25,
-        "m": ["Skeleton", "Mummy"]
+        "e": 75,
+        "m": ["Skeleton", "Mummy"],
+        "w": True
     },
     ";": {
         "t": "TALL GRASS",
         "e": 30,
-        "m": ["Skeleton", "Goblin"]
+        "m": ["Skeleton", "Goblin", "Bandit"],
+        "w": True
     },
     "A": {
         "t": "ACADEMY",
         "e": 0,
-        "m": []
+        "m": ["Error"],
+        "w": True
     },
     "M": {
         "t": "MOUNTAINS",
         "e": 100,
-        "m": ["Orc"]
+        "m": ["Orc"],
+        "w": True
     },
     "T": {
         "t": "FOREST",
         "e": 75,
-        "m": ["Skeleton", "Goblin", "Orc"]
+        "m": ["Skeleton", "Goblin", "Orc"],
+        "w": True
     },
     "S": {
         "t": "MERCHANT",
         "e": 0,
-        "m": []
+        "m": ["Error"],
+        "w": True
     },
     "K": {
         "t": "KING",
         "e": 0,
-        "m": []
+        "m": ["Error"],
+        "w": True
     }
 }
 
 mobs = {
+    "Error": {
+        "hp": [1],
+        "dg": [1],
+        "ac": [1],
+        "gd": [1],
+        "rn": [100],
+        "ef": ["none"]
+    },
+    "Bandit": {
+        "hp": [12],
+        "dg": [1,2,3],
+        "ac": [90],
+        "gd": [1,2,3,4,5],
+        "rn": [10],
+        "ef": ["steal"]
+    },
     "Skeleton": {
-        "hp": [5,5,5,5,6,4],
+        "hp": [5,5,5,3,6,4],
         "dg": [2],
-        "ac": 60,
-        "gd": [4,4,4,5,5,6,10]
+        "ac": [60],
+        "gd": [4,4,4,5,5,6,10],
+        "rn": [100],
+        "ef": ["none"]
     },
     "Goblin": {
         "hp": [10],
-        "dg": [5],
-        "ac": 80,
-        "gd": [12]
+        "dg": [4],
+        "ac": [80],
+        "gd": [12],
+        "rn": [50],
+        "ef": ["none"]
     },
     "Orc": {
-        "hp": [15,20,35],
+        "hp": [25,30,35],
         "dg": [6],
-        "ac": 90,
-        "gd": [12,15,20]
+        "ac": [90],
+        "gd": [12,15,20],
+        "rn": [20],
+        "ef": ["none"]
     },
     "Mummy": {
         "hp": [40],
         "dg": [10],
-        "ac": 100,
-        "gd": [30]
+        "ac": [100],
+        "gd": [30],
+        "rn": [95],
+        "ef": ["none"]
     },
     "Evil Wizard": {
-        "hp": [60],
+        "hp": [100],
         "dg": [15],
-        "ac": 100,
-        "gd": [100]
+        "ac": [100],
+        "gd": [100],
+        "rn": [0],
+        "ef": ["none", "fireball", "none"]
     }
 }
 
@@ -144,6 +184,7 @@ def save():
     stats = [
         hero_name,
         str(HP),
+        str(HP_MAX),
         str(ATK),
         str(POT),
         str(ELX),
@@ -169,6 +210,23 @@ def heal(amount):
     print("You feel stronger!")
     print(hero_name + "'s" + " HP has been increased to " + str(HP) + "!")
 
+def mob_effect(effect, enemy):
+    global HP, POT, ELX, GLD, HP_MAX
+
+    if effect == "none":
+        pass
+    elif effect == "steal":
+        stolen = random.randint(1,6)
+        if stolen <= GLD:
+            GLD -= stolen
+            print(enemy + " stole " + str(stolen) + " GOLD from you!")
+        else:
+            GLD = 0
+            print(enemy + " stole all of your of your GOLD!")
+    elif effect == "fireball":
+        print(enemy + " cast a FIREBALL and did 15 extra damage to " + hero_name + "!")
+        HP -= 10
+
 def battle():
     global fight, play, run, HP, POT, ELX, GLD, boss
 
@@ -180,6 +238,7 @@ def battle():
     hpmax = hp
     atk = random.choice(mobs[enemy]["dg"])
     g = random.choice(mobs[enemy]["gd"])
+    ac = random.choice(mobs[enemy]["ac"])
     boss = False
 
     while fight:
@@ -203,6 +262,7 @@ def battle():
             print("2 - USE POTION (5 HP)")
         if ELX > 0:
             print("3 - USE ELIXER (10 HP)")
+        print("4 - RUN!")
         divide()
 
         choice = input("# ")
@@ -211,11 +271,12 @@ def battle():
             hp -= ATK
             print(hero_name + " dealt " + str(ATK) + " damage to the " + enemy + ".")
             if hp > 0:
-                if random.randint(0,100) <= mobs[enemy]["ac"]:
+                if random.randint(0,100) <= ac:
                     HP -= atk
                     print(enemy + " dealt " + str(atk) + " damage to " + hero_name + ".")
                 else:
                     print(enemy + " missed!")
+            mob_effect(random.choice(mobs[enemy]["ef"]), enemy)
             input("> ")
         
         elif choice == "2":
@@ -224,6 +285,7 @@ def battle():
                 heal(POT_HEAL)
                 HP -= atk
                 print(enemy + " dealt " + str(atk) + " damage to " + hero_name + ".")
+                mob_effect(random.choice(mobs[enemy]["ef"]), enemy)
                 input("> ")
             else:
                 print("You are out of POTIONS!")
@@ -235,9 +297,21 @@ def battle():
                 heal(ELX_HEAL)
                 HP -= atk
                 print(enemy + " dealt " + str(atk) + " damage to " + hero_name + ".")
+                mob_effect(random.choice(mobs[enemy]["ef"]), enemy)
                 input("> ")
             else:
                 print("You are out of ELIXERS!")
+                input("> ")
+        elif choice == "4":
+            if random.randint(1, 100) <= random.choice(mobs[enemy]["rn"]):
+                print("You ran away from the " + enemy + " successfully!")
+                input("> ")
+                fight = False
+            else:
+                HP -= atk
+                print("The " + enemy + " stopped you from fleeing!")
+                print(enemy + " dealt " + str(atk) + " damage to " + hero_name + ".")
+                mob_effect(random.choice(mobs[enemy]["ef"]), enemy)
                 input("> ")
 
         if HP <= 0:
@@ -256,7 +330,7 @@ def battle():
             fight = False
             GLD += g
             print("You found " + str(g) + " gold!")
-            if random.randint(0, 100) <= 30:
+            if random.randint(1, 100) <= 30:
                 POT += 1
                 print("You've found a POTION!")
             if enemy == "Evil Wizard":
@@ -269,22 +343,19 @@ def battle():
             clear()
  
 def shop():
-    global buy, GLD, POT, ELX, ATK
+    global buy, GLD, POT, ELX, ATK, HP_MAX
 
     while buy:
         clear()
         divide()
         print("Welcome to my humble shop...")
         divide()
-        print("GOLD: " + str(GLD))
-        print("POTIONS: " + str(POT))
-        print("ELIXERS: " + str(ELX))
-        print("ATK: " + str(ATK))
-        divide()
+        draw_stats()
         print("1 - BUY POTION (" + str(POT_HEAL) + ") - 5 GOLD")
         print("2 - BUY ELIXER (" + str(ELX_HEAL) + ") - 8 GOLD")
-        print("3 - UPGRADE WEAPON (" + str(SMTHNG) + "ATK) - 10 GOLD")
-        print("4 - LEAVE")
+        print("3 - UPGRADE WEAPON (" + str(WEP_SMTH) + "ATK) - 10 GOLD")
+        print("4 - UPGRADE ARMOR (ADD " + str(ARM_SMTH) + " TO MAX HP) - 10 GOLD")
+        print("0 - LEAVE")
         divide()
 
         choice = input("# ")
@@ -307,13 +378,21 @@ def shop():
             input("> ")
         elif choice == "3":
             if GLD >= 10:
-                ATK += SMTHNG
+                ATK += WEP_SMTH
                 GLD -= 10
                 print("Your sword shines brighter! (" + str(ATK) + "ATK)")
             else:
                 print("Not enough gold!")
             input("> ")
         elif choice == "4":
+            if GLD >= 10:
+                HP_MAX += ARM_SMTH
+                GLD -= 10
+                print("Your armor shines brighter! (" + str(HP_MAX) + "MAX HP)")
+            else:
+                print("Not enough gold!")
+            input("> ")
+        elif choice == "0":
             buy = False
 
 def king():
@@ -361,7 +440,62 @@ def academy():
         elif choice == "2":
             boss = False
 
+def draw_map():
+    clear()
+    divide()
+    print("LOCATION: " + biome[map[y][x]]["t"])
+    divide()
+    print("\u250C", end="")
+    for r in range(len(map) + 2):
+        print("\u2500", end="")
+    print("\u2510")
+    for r in range(len(map)):
+        print("\u2502 ", end="")
+        for c in range(len(map[r])):
+            if r == y and c == x:
+                print("@", end = "")
+            else:
+                print(map[r][c], end = "")
+        print(" \u2502")
+    print("\u2514", end="")
+    for r in range(len(map) + 2):
+        print("\u2500", end="")
+    print("\u2518")
+    divide()
 
+def draw_stats():
+    print("NAME: " + hero_name)
+    print("HP: " + str(HP) + "/" + str(HP_MAX))
+    print("ATK: " + str(ATK))
+    print("POTIONS: ", end="")
+    for i in range(POT):
+        print("() ", end="")
+    print()
+    print("ELIXERS: ", end="")
+    for i in range(ELX):
+        print("[] ", end="")
+    print()
+    print("GOLD: " + str(GLD))
+    divide()   
+ 
+def draw_actions():
+    if y > 0:
+        print("W - \u25B2 " + biome[map[y - 1][x]]["t"])
+    if x > 0:
+        print("A - \u25C0 " + biome[map[y][x - 1]]["t"])
+    if y < y_len:
+        print("S - \u25BC " + biome[map[y + 1][x]]["t"])
+    if x < x_len:
+        print("D - \u25B6 " + biome[map[y][x + 1]]["t"])
+    if POT > 0:
+        print("1 - use POTION")
+    if ELX > 0:
+        print("2 - use ELIXER")
+    if map[y][x] == "S" or map[y][x] == "K" or map[y][x] == "A":
+        print("E - ENTER")
+    print("0 - SAVE AND QUIT")
+    divide()
+    
 while run:
     while menu:
         clear()
@@ -408,6 +542,8 @@ while run:
             clear()
             print("What is your name Hero?")
             hero_name = input("# ")
+            if len(hero_name) == 0:
+                hero_name = "Hero"
             menu = False
             play = True
         elif choice == "2":
@@ -417,14 +553,15 @@ while run:
                 if len(load_list) == STAT_LEN:
                     hero_name = load_list[0][:-1]
                     HP = int(load_list[1][:-1])
-                    ATK = int(load_list[2][:-1])
-                    POT = int(load_list[3][:-1])
-                    ELX = int(load_list[4][:-1])
-                    GLD = int(load_list[5][:-1])
-                    x = int(load_list[6][:-1])
-                    y = int(load_list[7][:-1])
-                    key = bool(load_list[8][:-1])
-                    operating_system = str(load_list[9][:-1])
+                    HP_MAX = int(load_list[2][:-1])
+                    ATK = int(load_list[3][:-1])
+                    POT = int(load_list[4][:-1])
+                    ELX = int(load_list[5][:-1])
+                    GLD = int(load_list[6][:-1])
+                    x = int(load_list[7][:-1])
+                    y = int(load_list[8][:-1])
+                    key = bool(load_list[9][:-1])
+                    operating_system = str(load_list[10][:-1])
                     clear()
                     print(hero_name, ": HP =", HP, "ATK =", ATK, "Gold =", GLD)
                     print("welcome back, " + hero_name + "!")
@@ -449,60 +586,16 @@ while run:
         save() #autosave
         clear()
         
-        if not standing and random.randint(0, 100) <= biome[map[y][x]]["e"]:
-                fight = True
-                battle()
+        if not standing and random.randint(1, 100) <= biome[map[y][x]]["e"]:
+            fight = True
+            battle()
 
         if play:
+            draw_map()
+            draw_stats()
+            draw_actions()
 
-            #Draws map
-            clear()
-            divide()
-            print("LOCATION: " + biome[map[y][x]]["t"])
-            divide()
-            for r in range(len(map)):
-                print("| ", end="")
-                for c in range(len(map[r])):
-                    if r == y and c == x:
-                        print("@", end = " ")
-                    else:
-                        print(map[r][c], end = " ")
-                print("|")
-            divide()
-
-            #Draws relevant stats
-            print("NAME: " + hero_name)
-            print("HP: " + str(HP) + "/" + str(HP_MAX))
-            print("ATK: " + str(ATK))
-            print("POTIONS: ", end="")
-            for i in range(POT):
-                print("() ", end="")
-            print()
-            print("ELIXERS: ", end="")
-            for i in range(ELX):
-                print("[] ", end="")
-            print()
-            print("GOLD: " + str(GLD))
-            divide()
-
-            #Draws play options
-            if y > 0:
-                print("W - \u25B2 " + biome[map[y - 1][x]]["t"])
-            if x > 0:
-                print("A - \u25C0 " + biome[map[y][x - 1]]["t"])
-            if y < y_len:
-                print("S - \u25BC " + biome[map[y + 1][x]]["t"])
-            if x < x_len:
-                print("D - \u25B6 " + biome[map[y][x + 1]]["t"])
-            if POT > 0:
-                print("5 - use POTION")
-            if ELX > 0:
-                print("6 - use ELIXER")
-            if map[y][x] == "S" or map[y][x] == "K" or map[y][x] == "A":
-                print("7 - ENTER")
-            print("0 - SAVE AND QUIT")
-            divide()
-
+            # Get input for actions
             dest = input("# ").upper()
 
         if dest == "0":
@@ -512,22 +605,22 @@ while run:
         
         #actions
         if dest == "W":
-            if y > 0:
+            if y > 0 and biome[map[y - 1][x]]["w"]:
                 y -= 1
                 standing = False
-        elif dest == "D":
+        elif dest == "D" and biome[map[y][x + 1]]["w"]:
             if x < x_len:
                 x += 1
                 standing = False
-        elif dest == "S":
+        elif dest == "S" and biome[map[y + 1][x]]["w"]:
             if y < y_len:
                 y += 1
                 standing = False
-        elif dest == "A":
+        elif dest == "A" and biome[map[y][x - 1]]["w"]:
             if x > 0:
                 x -= 1
                 standing = False
-        elif dest == "5":
+        elif dest == "1":
             if POT > 0:
                 heal(POT_HEAL)
                 POT -= 1
@@ -535,7 +628,7 @@ while run:
                 print("You are out of POTIONS!")
             input("> ")
             standing = True
-        elif dest == "6":
+        elif dest == "2":
             if ELX > 0:
                 heal(ELX_HEAL)
                 ELX -= 1
@@ -543,7 +636,7 @@ while run:
                 print("You are out of ELIXERS!")
             input("> ")
             standing = True
-        elif dest == "7":
+        elif dest == "E":
             if map[y][x] == "S":
                 buy = True
                 shop()
