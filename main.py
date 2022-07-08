@@ -52,11 +52,13 @@ select = False
 
 #map of the corrupted lands 5x5
 map = [
-    [";", ",", ".", "S", "."],
-    [";", ";", ",", ".", "."],
-    ["~", "~", "T", ".", "."],
-    ["~", "T", "T", ".", "M"],
-    ["T", "K", "T", "M", "A"]]
+    list(",,,.."),
+    list(",,..."),
+    list("/,.S."),
+    list("//,.."),
+    list("~~T.."),
+    list("~TT.M"),
+    list("TKTMA")]
 
 y_len = len(map) - 1
 x_len = len(map[0]) - 1
@@ -83,8 +85,8 @@ biome = {
         "m": ["Skeleton", "Mummy"],
         "w": True
     },
-    ";": {
-        "d": "\033[2m;\033[0m",
+    "/": {
+        "d": "\033[2m/\033[0m",
         "t": "TALL GRASS",
         "e": 30,
         "m": ["Skeleton", "Goblin", "Bandit", "Troll"],
@@ -194,9 +196,6 @@ mobs = {
     }
 }
 
-current_tile = map[y][x]
-name_of_tile = biome[current_tile]["t"]
-
 def clear():
 
     if operating_system == "MAC":
@@ -237,7 +236,6 @@ def heal(amount):
         HP += amount
     else:
         HP = HP_MAX
-    print("You feel stronger!")
     print(hero_name + "'s" + " HP has been increased to " + str(HP) + "!")
 
 def mob_effect(effect, enemy):
@@ -524,7 +522,7 @@ def draw_map():
     print("LOCATION: " + biome[map[y][x]]["t"])
     divide()
     print("\u250C", end="")
-    for r in range(len(map) + 2):
+    for r in range(len(map[0]) + 2):
         print("\u2500", end="")
     print("\u2510")
     for r in range(len(map)):
@@ -538,7 +536,7 @@ def draw_map():
                 print(" ", end="")
         print(" \u2502")
     print("\u2514", end="")
-    for r in range(len(map) + 2):
+    for r in range(len(map[0]) + 2):
         print("\u2500", end="")
     print("\u2518")
 
@@ -584,8 +582,6 @@ def draw_actions():
     if map[y][x] == "S" or map[y][x] == "K" or map[y][x] == "A":
         print("E - ENTER")
     print("0 - SAVE AND QUIT")
-    
-# def load_map():
 
 while run:
     while menu:
