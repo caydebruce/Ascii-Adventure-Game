@@ -345,7 +345,7 @@ rings = {
         "spell1": ["heal", 8],
         "cost1": 5,
         "name2": "POISON",
-        "spell2": ["poison", 3, 10],
+        "spell2": ["flame", 3, 20],
         "cost2": 9,
     },
     "Taran's Ring": {
@@ -587,7 +587,7 @@ def mob_effect(effect):
 
     elif effect == "poison":
         HP -= 1
-        print(hero_name + " has been POISONED!")
+        print(hero_name + " has been POISONED for 1 HP!")
 
 def draw_mob_stats():
     global MOB, MOB_HP, MOB_HPMAX, MOB_ATK
@@ -674,13 +674,6 @@ def cast(spell):
         print(hero_name + " did " + str(spell[1]) + " damage to " + MOB + " with their spell!")
         print(MOB + "'s accuracy has been decreased by " + str(spell[2]) + "%!")
     
-    if spell[0] == "poison":
-        MOB_HP -= spell[1]
-        for i in MOB_ATK:
-            MOB_ATK[i] = int(MOB_ATK[i] * ((100 - spell[2]) /100))
-        print(hero_name + " did " + str(spell[1]) + " damage to " + MOB + " with their spell!")
-        print(MOB + "'s attacks have been decreased by " + str(spell[2]) + "%!")
-
 def attack(move):
     global HP, MANA, STAM, WEAPON, RING, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB
 
