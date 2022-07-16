@@ -106,7 +106,7 @@ map = [
     list("`TTT////...~..........`"),
     list("`TTTTTTTTTT~..........`"),
     list("`###TTTTTTT~..........`"),
-    list("`AH#TTTTTTT~..........`"),
+    list("`A_#TTTTTTT~..........`"),
     list("```````````````````````")]
 
 y_len = len(map) - 1
@@ -827,7 +827,6 @@ def battle():
         elif choice == "2":
             
             cast_menu = True
-
             while cast_menu:
                 clear()
                 divide()
@@ -856,7 +855,7 @@ def battle():
                             cast(rings[RING]["spell" + choice])
                             if MOB_HP > 0:
                                 mob_attack()
-                            cast_menu - False
+                            cast_menu = False
                         else:
                             print("Not enough MANA!")
                         input("> ")
