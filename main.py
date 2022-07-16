@@ -116,7 +116,7 @@ t_norm = "\033[0m"
 t_gray = "\033[90m"
 t_red = "\033[91m"
 t_green = "\033[32m"
-t_legend = "\093[91m"
+t_yellow = "\033[93m"
 
 biome = {
     "s": {
@@ -277,13 +277,13 @@ weapons = {
     },
      "Iron Sword": {
         "name1": "SLASH",
-        "atk1": ["basic", 6],
+        "atk1": ["basic", 8],
         "acc1": 100,
         "cost1": 0,
         "name2": "HEAVY SLASH",
-        "atk2": ["basic", 9],
+        "atk2": ["basic", 10],
         "acc2": 100,
-        "cost2": 5,
+        "cost2": 3,
     },
     "Rusty Sword": {
         "name1": "SLASH",
@@ -439,7 +439,7 @@ mobs = {
         "dp": [("Rusty Sword", "w", 50), ("Taran's Ring", "r", 10), ("Dual Rapier", "w", 50)]
     },
     "Forest Sentinel": {
-        "hp": [30,33,35],
+        "hp": [20],
         "dg": [8,8,8,14],
         "ac": [70],
         "sl": [20,22,22,24,27],
@@ -677,7 +677,7 @@ def cast(spell):
     if spell[0] == "poison":
         MOB_HP -= spell[1]
         for i in MOB_ATK:
-            MOB_ATK[i] -= MOB_ATK[i] * ((100 - spell[2]) /100)
+            MOB_ATK[i] = int(MOB_ATK[i] * ((100 - spell[2]) /100))
         print(hero_name + " did " + str(spell[1]) + " damage to " + MOB + " with their spell!")
         print(MOB + "'s attacks have been decreased by " + str(spell[2]) + "%!")
 
