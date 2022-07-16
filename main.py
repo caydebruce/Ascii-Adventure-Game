@@ -716,7 +716,7 @@ def attack(move):
     if move[0] == "lifesteal":
         MOB_HP -= move[1]
         heal(move[2])
-        print(hero_name + " stole " + str(move[1]) + " health from " + MOB + "!")
+        print(hero_name + " stole " + str(move[2]) + " health from " + MOB + "!")
 
 def battle():
     global fight, boss, HP, POT, ELX, SOULS, MANA, STAM, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB
