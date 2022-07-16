@@ -327,11 +327,11 @@ weapons = {
     },
     "Cursed Vine Whip": {
         "name1": "WHIP",
-        "atk1": ["basic", 5],
-        "acc1": 75,
+        "atk1": ["basic", 8],
+        "acc1": 95,
         "cost1": 0,
         "name2": "CONSTRICT",
-        "atk2": ["lifesteal", 6, 1], #name dmg heal
+        "atk2": ["lifesteal", 8, 3], #name dmg heal
         "acc2": 90,
         "cost2": 1
     }
