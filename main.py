@@ -121,14 +121,14 @@ t_legend = "\093[91m"
 biome = {
     "s": {
         "d": t_green + "." + t_norm,
-        "t": t_gray + "SWAMP" + t_norm,
+        "t": "SWAMP",
         "e": 75,
         "m": ["Swamp Rot Wretch", "Swamp Rot Skeleton"],
         "w": True
     },
     "g": {
         "d": t_red + "&" + t_norm,
-        "t": t_gray + "CHALLENGE THE GREEN HOLY KNIGHT" + t_norm,
+        "t": "CHALLENGE THE GREEN HOLY KNIGHT",
         "e": 100,
         "m": ["Green Cursed Knight"],
         "w": True
