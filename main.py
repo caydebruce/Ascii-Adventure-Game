@@ -97,16 +97,16 @@ map = [
     list("`.....................`"),
     list("`########rrrr.........`"),
     list("`ssssssgr..Hr.........`"),
-    list("`ssssssr,r..r.........`"),
-    list("`Hsssrr,,,,rr.........`"),
+    list("`ssssssr,,rr..........`"),
+    list("`Hsssrr,,,,r..........`"),
     list("`sssr,,,,r,~..........`"),
     list("`ssr/H,r...~..........`"),
     list("`//////r,..~..........`"),
     list("`r//r//r,..~..........`"),
     list("`TTT////...~..........`"),
     list("`TTTTTTTTTT~..........`"),
-    list("`###TTTTTTT~..........`"),
-    list("`A_#TTTTTTT~..........`"),
+    list("`#_#TTTTTTT~..........`"),
+    list("`1_#TTTTTTT~..........`"),
     list("```````````````````````")]
 
 y_len = len(map) - 1
@@ -126,9 +126,16 @@ biome = {
         "m": ["Swamp Rot Wretch", "Swamp Rot Skeleton"],
         "w": True
     },
+    "1": {
+        "d": t_yellow + "%" + t_norm,
+        "t": (t_yellow + "DEMIGOD OVENTUS" + t_norm),
+        "e": 100,
+        "m": [(t_yellow + "DEMIGOD OVENTUS" + t_norm)],
+        "w": True
+    },
     "g": {
         "d": t_red + "&" + t_norm,
-        "t": "CHALLENGE THE GREEN HOLY KNIGHT",
+        "t": "THE CURSED GREEN KNIGHT",
         "e": 100,
         "m": ["Green Cursed Knight"],
         "w": True
@@ -305,6 +312,16 @@ weapons = {
         "acc2": 100,
         "cost2": 3
     },
+    "Dual Bronze Rapiers": {
+        "name1": "SLASH",
+        "atk1": ["basic", 15],
+        "acc1": 75,
+        "cost1": 0,
+        "name2": "DOUBLE SLASH",
+        "atk2": ["double", 8, 100, 8, 80, 8], #[move, dmg, acc, dmg2, acc2, combo dmg]
+        "acc2": 100,
+        "cost2": 6
+    },
     "The Gideon": {
         "name1": "EARTH SHATTER",
         "atk1": ["stager", 12, 5],
@@ -383,6 +400,15 @@ mobs = {
         "rn": [100],
         "ef": ["none"],
         "dp": []
+    },
+    "\033[93mDEMIGOD OVENTUS\033[0m": {
+        "hp": [35],
+        "dg": [4],
+        "ac": [100],
+        "sl": [200],
+        "rn": [0],
+        "ef": ["lifesteal", 1],
+        "dp": [("Dual Bronze Rapiers", "w", 100)]
     },
     "Swamp Rot Wretch": {
         "hp": [17,18,20],
@@ -911,7 +937,7 @@ def hideout():
         print("2 - RING STASH   - (" + str(len(RING_STASH)) +  " ITEMS)")
         print("3 - CRAFT POTION - (10 SOULS)")
         print("4 - CRAFT ELIXER - (10 SOULS)")
-        LVL_COST = (int(pow(float(LVL), 1.2)) + 10)
+        LVL_COST = (int(pow(float(LVL), 1.1)) + 10)
         print("5 - LEVEL UP HP   - (%d SOULS)" % LVL_COST)
         print("6 - LEVEL UP MANA - (%d SOULS)" % LVL_COST)
         print("7 - LEVEL UP STAM - (%d SOULS)" % LVL_COST)
