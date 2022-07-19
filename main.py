@@ -23,14 +23,6 @@ START_RING = "No Ring"
 START_SPAWN = (11, 11)
 STAT_LEN = 23
 
-
-
-MAX_POT = 4
-MAX_ELX = 4
-STAM_RECOVER = 1
-POT_HEAL = 10
-ELX_HEAL = 10
-
 #Grave vars
 GRAVE = [-100, -100]
 GRAVE_SOULS = 0
@@ -42,7 +34,6 @@ MOB_HPMAX = 0
 MOB_ATK = [-1, -2]
 MOB_SOLS = 0
 MOB_AC = 0
-MOB_SE = []
 
 
 #Hero starting stats
@@ -68,6 +59,11 @@ SPAWN = START_SPAWN
 
 #Game starting variables
 LVL_COST = 10
+MAX_POT = 4
+MAX_ELX = 4
+STAM_RECOVER = 1
+POT_HEAL = 10
+ELX_HEAL = 10
 run = True
 menu = True
 play = False
@@ -78,7 +74,6 @@ standing = True
 speak = False
 boss = False
 select = False
-bridge_1 = False
 cast_menu = False
 attack_menu = False
 hiding = False
@@ -164,8 +159,8 @@ biome = {
     "_": {
         "d": "\033[2m_\033[0m",
         "t": "PATH",
-        "e": 3,
-        "m": ["Bandit"],
+        "e": 0,
+        "m": ["Error"],
         "w": True
     },
     "#": {
@@ -1261,12 +1256,10 @@ while run:
                     select = False
                 input("> ")
             clear()
-            print("Awake again... Do you remember you name?")
+            print("Awake again... What is your name?")
             hero_name = input("input name# ")
             if len(hero_name) == 0:
                 hero_name = "Hero"
-            print("Hmm... What a shame. I thought we finally made progress last time...")
-            input("> ")
             menu = False
             play = True
         elif choice == "2":
