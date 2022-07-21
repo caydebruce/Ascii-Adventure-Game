@@ -1,4 +1,4 @@
-# py_rpg
+# Askii Adventure
 askii rpg game
 
 This program is a simple askii art adventure game playble through the terminal on your computer!
