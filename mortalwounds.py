@@ -1,7 +1,10 @@
 from functools import update_wrapper
+import io
 import os
 import random
 import ast
+import time
+import sys
 
 #magic numbers
 START_LVL = 1
@@ -11,8 +14,8 @@ START_MANA = 12
 START_MANA_MAX = 12
 START_STAM = 12
 START_STAM_MAX = 12
-START_POT = 4
-START_ELX = 4
+START_POT = 3
+START_ELX = 3
 START_SOULS = 0
 START_X = 11
 START_Y = 11
@@ -21,7 +24,8 @@ SPAWN = [(11, 11)]
 START_WEAPON = "Fists"
 START_RING = "No Ring"
 START_SPAWN = (11, 11)
-STAT_LEN = 23
+START_SE = []
+STAT_LEN = 25
 
 #Grave vars
 GRAVE = [-100, -100]
@@ -34,6 +38,7 @@ MOB_HPMAX = 0
 MOB_ATK = [-1, -2]
 MOB_SOLS = 0
 MOB_AC = 0
+MOB_SE = []
 
 
 #Hero starting stats
@@ -56,6 +61,8 @@ RING = START_RING
 WEAPON_STASH = [START_WEAPON]
 RING_STASH = [START_RING]
 SPAWN = START_SPAWN
+SE = START_SE
+DEATHS = 0
 
 #Game starting variables
 LVL_COST = 10
@@ -91,17 +98,17 @@ map = [
     list("`.....................`"),
     list("`.....................`"),
     list("`########rrrr.........`"),
-    list("`ssssssgr..Hr.........`"),
-    list("`ssssssr,,rr..........`"),
+    list("`ssssssgr._Hr.........`"),
+    list("`ssssssr..rr..........`"),
     list("`Hsssrr,,,,r..........`"),
     list("`sssr,,,,r,~..........`"),
     list("`ssr/H,r...~..........`"),
     list("`//////r,..~..........`"),
     list("`r//r//r,..~..........`"),
-    list("`TTT////...~..........`"),
-    list("`TTTTTTTTTT~..........`"),
-    list("`#_#TTTTTTT~..........`"),
-    list("`1_#TTTTTTT~..........`"),
+    list("`TTT///_...~..........`"),
+    list("`TTTTTT_TTT~..........`"),
+    list("`#_#TTT____~..........`"),
+    list("`H1#TTTTTTT~..........`"),
     list("```````````````````````")]
 
 y_len = len(map) - 1
@@ -112,11 +119,12 @@ t_gray = "\033[90m"
 t_red = "\033[91m"
 t_green = "\033[32m"
 t_yellow = "\033[93m"
+t_blue = "\033]94m"
 
 biome = {
     "s": {
-        "d": t_green + "." + t_norm,
-        "t": "SWAMP",
+        "d": t_gray + "." + t_norm,
+        "t": t_green + "SWAMP" + t_norm,
         "e": 75,
         "m": ["Swamp Rot Wretch", "Swamp Rot Skeleton"],
         "w": True
@@ -137,7 +145,7 @@ biome = {
     },
     "r": {
         "d": t_gray + "#" + t_norm,
-        "t": t_gray + "RUINS" + t_norm,
+        "t": t_gray + "DIVINE TOWER RUINS" + t_norm,
         "e": 0,
         "m": ["Error"],
         "w": False
@@ -236,12 +244,14 @@ weapons = {
         "cost1": 0,
     },
     "Fists": {
+        "desc": "Your bare hands.",
         "name1": "PUNCH",
         "atk1": ["basic", 1],
         "acc1": 100,
         "cost1": 0,
     },
     "Bone Club": {
+        "desc": "A small bone club only slightly more effective than your fists",
         "name1": "STRIKE",
         "atk1": ["basic", 2],
         "acc1": 90,
@@ -258,6 +268,7 @@ weapons = {
         "cost2": 10,
     },
     "Swamp Rot Sword": {
+        "desc": "High basic damage but at the cost of stamina.",
         "name1": "SLASH",
         "atk1": ["basic", 7],
         "acc1": 100,
@@ -268,6 +279,7 @@ weapons = {
         "cost2": 6,
     },
     "Steel Sword": {
+        "desc": "A sword capable of light and heavy attacks.",
         "name1": "SLASH",
         "atk1": ["basic", 8],
         "acc1": 100,
@@ -278,6 +290,7 @@ weapons = {
         "cost2": 6,
     },
      "Iron Sword": {
+         "desc": "A sword capable of light and heavy attacks.",
         "name1": "SLASH",
         "atk1": ["basic", 8],
         "acc1": 100,
@@ -288,6 +301,7 @@ weapons = {
         "cost2": 3,
     },
     "Rusty Sword": {
+        "desc": "A sword capable of light and heavy attacks.",
         "name1": "SLASH",
         "atk1": ["basic", 3],
         "acc1": 90,
@@ -298,6 +312,7 @@ weapons = {
         "cost2": 3,
     },
     "Dual Rapier": {
+        "desc": "A sword that trades combo-damage for accuracy.",
         "name1": "SLASH",
         "atk1": ["basic", 3],
         "acc1": 75,
@@ -308,6 +323,7 @@ weapons = {
         "cost2": 3
     },
     "Dual Bronze Rapiers": {
+        "desc": "A sword capable of light and powerful combo attacks.",
         "name1": "SLASH",
         "atk1": ["basic", 15],
         "acc1": 75,
@@ -328,6 +344,7 @@ weapons = {
         "cost2": 0
     },
     "Dagger": {
+        "desc": "A light dagger capable of modest damage with minimal stamina cost.",
         "name1": "SLASH",
         "atk1": ["basic", 4],
         "acc1": 75,
@@ -338,6 +355,7 @@ weapons = {
         "cost2": 1
     },
     "Cursed Vine Whip": {
+        "desc": "Squeeze the life out of you enemies with this magical whip.",
         "name1": "WHIP",
         "atk1": ["basic", 8],
         "acc1": 95,
@@ -351,8 +369,10 @@ weapons = {
 
 rings = {
     "No Ring": {
+        "desc": ""
     },
     "Swamp Rot Ring": {
+        "desc": "heal or poison your enemies.",
         "name1": "LESSER HEAL",
         "spell1": ["heal", 8],
         "cost1": 5,
@@ -361,6 +381,7 @@ rings = {
         "cost2": 9,
     },
     "Taran's Ring": {
+        "desc": "Blind your enemies with a powerful flame that lasts for multiple turns.",
         "name1": "LESSER HEAL",
         "spell1": ["heal", 8],
         "cost1": 5,
@@ -369,11 +390,12 @@ rings = {
         "cost2": 7,
     },
     "Worshipper's Ring": {
+        "desc": "heal youself",
         "name1": "HEAL",
         "spell1": ["heal", 10],
-        "cost1": 12,
     },
     "Emerald Ring" : {
+        "desc": "A ring with many healing options",
         "name1": "LESSER HEAL",
         "spell1": ["heal", 5],
         "cost1": 3,
@@ -468,15 +490,23 @@ mobs = {
         "ef": ["lifesteal", 1],
         "dp": [("Iron Sword", "w", 20)]
     },
-    "Evil Wizard": {
-        "hp": [100],
-        "dg": [15],
+    "Divine Terror": {
+        "hp": [666],
+        "dg": [3],
         "ac": [100],
-        "sl": [100],
+        "sl": [666],
         "rn": [0],
-        "ef": ["none", "fireball"]
+        "ef": ["none"]
     }
 }
+
+def title():
+    print("  __  __  ____  _____ _______       _       __          ______  _    _ _   _ _____   _____ ")
+    print(" |  \/  |/ __ \|  __ \__   __|/\   | |      \ \        / / __ \| |  | | \ | |  __ \ / ____|")
+    print(" | \  / | |  | | |__) | | |  /  \  | |       \ \  /\  / / |  | | |  | |  \| | |  | | (___  ")
+    print(" | |\/| | |  | |  _  /  | | / /\ \ | |        \ \/  \/ /| |  | | |  | | . ` | |  | |\___ \ ")
+    print(" | |  | | |__| | | \ \  | |/ ____ \| |____     \  /\  / | |__| | |__| | |\  | |__| |____) |")
+    print(" |_|  |_|\____/|_|  \_\ |_/_/    \_\______|     \/  \/   \____/ \____/|_| \_|_____/|_____/ ")
 
 def clear():
 
@@ -486,19 +516,20 @@ def clear():
         os.system('cls')
 
 def divide():
-    print('================================================================')
+    print("===========================================================================================")
 
 def header():
     print("NAME: " + hero_name + " | LEVEL: " + str(LVL) + " | LOCATION: " + biome[map[y][x]]["t"])
 
 def stam_use():
-    global POT, ELX, SOULS, x, y, STAM, HP, MANA, fight, GRAVE, GRAVE_SOULS
+    global POT, ELX, SOULS, x, y, STAM, HP, MANA, fight, GRAVE, GRAVE_SOULS, DEATHS
 
     STAM -= 1
     if STAM < 0:
         fight = False
         GRAVE = [x, y]
         GRAVE_SOULS = int(SOULS / 2)
+        DEATHS += 1
         clear()
         divide()
         print("YOU DIED FROM EXHAUSTION!")
@@ -538,7 +569,9 @@ def save():
         str(RING_STASH),
         str(GRAVE),
         str(GRAVE_SOULS),
-        str(SPAWN)
+        str(SPAWN),
+        str(SE),
+        str(DEATHS)
     ]
 
     f = open("load.txt", "w")
@@ -592,11 +625,9 @@ def mob_effect(effect):
         else:
             SOULS = 0
             print(MOB + " stole all of your of your SOULS!")
-
     elif effect == "fireball":
         print(MOB + " cast a FIREBALL and did 15 extra damage to " + hero_name + "!")
         HP -= 10
-    
     elif effect == "lifesteal":
         curse = mobs[MOB]["ef"][1]
         HP -= curse
@@ -605,10 +636,12 @@ def mob_effect(effect):
         else:
             MOB_HP += curse
         print(MOB + " drained " + str(curse) + " of your HP and restored their health!")
-
     elif effect == "poison":
-        HP -= 1
-        print(hero_name + " has been POISONED for 1 HP!")
+        add_player_se(["poison", 2, 1])
+        print(hero_name + " has been POISONED for 1 HP for 2 turns!")
+    elif effect == "burn":
+        add_player_se(["burn", 2, 2])
+        print(hero_name + " has been BURNED for 2 HP for 2 turns!")
 
 def draw_mob_stats():
     global MOB, MOB_HP, MOB_HPMAX, MOB_ATK
@@ -618,11 +651,16 @@ def draw_mob_stats():
             print(t_red + "\u2588" + t_norm, end="")
         else:
             print(t_red + "_" + t_norm, end="")
-    print("  HP: " + str(MOB_HP) + "/" + str(MOB_HPMAX))
+    print("  HP: " + str(MOB_HP) + "/" + str(MOB_HPMAX), end="")
+    if any(e[0] == "burn" for e in MOB_SE):
+        print(t_red + " Burning!" + t_norm, end="")
+    if any(e[0] == "poison" for e in MOB_SE):
+        print(t_green + " Poisoned!" + t_norm, end="")
+    print("")
     print("ATK: " + str(MOB_ATK[0]) + " - " + str(MOB_ATK[-1]))
 
 def death_check():
-    global fight, play, run, POT, ELX, SOULS, boss, x, y, MOB_SOLS, MOB, cast_menu, attack_menu, WEAPON_STASH, RING_STASH, HP, STAM, MANA, GRAVE, GRAVE_SOULS
+    global fight, run, POT, ELX, SOULS, x, y, MOB_SOLS, MOB, cast_menu, attack_menu, WEAPON_STASH, RING_STASH, HP, STAM, MANA, GRAVE, GRAVE_SOULS, DEATHS, SE
 
     if HP <= 0:
         GRAVE = [x, y]
@@ -642,7 +680,10 @@ def death_check():
         HP = HP_MAX
         MANA = MANA_MAX
         STAM = STAM_MAX
+        SE = []
+        DEATHS += 1
         print("YOU DIED")
+        divide()
         input("> ")
         clear()
         print(str(random.randint(18, 45)) + " years later...")
@@ -652,6 +693,7 @@ def death_check():
     if MOB_HP <= 0:
         divide()
         clear()
+        divide()
         print(hero_name + " defeated the " + MOB + "!")
         divide()
         fight = False
@@ -669,13 +711,7 @@ def death_check():
                 if i[1] == "r" and i[0] not in RING_STASH:
                     RING_STASH.append(i[0])
                     print("You found a " + i[0] + "! - Equip it at any Hideout location.")
-
-        if MOB == "Evil Wizard":
-            print("Congratulations! You've defeated the Evil Wizard!")
-            print("You have finished the game!")
-            boss = False
-            play = False
-            run = False
+        divide()
         input("> ")
         clear()
 
@@ -694,6 +730,10 @@ def cast(spell):
         MOB_AC = MOB_AC * ((100 - spell[2]) / 100)
         print(hero_name + " did " + str(spell[1]) + " damage to " + MOB + " with their spell!")
         print(MOB + "'s accuracy has been decreased by " + str(spell[2]) + "%!")
+        add_mob_se(["burn", 2, 2])
+    
+    if spell[0] == "burn":
+        add_mob_se(["burn", 2, 2])
     
 def attack(move):
     global HP, MANA, STAM, WEAPON, RING, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB
@@ -740,18 +780,19 @@ def attack(move):
         print(hero_name + " stole " + str(move[2]) + " health from " + MOB + "!")
 
 def battle():
-    global fight, boss, HP, POT, ELX, SOULS, MANA, STAM, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB
+    global fight, boss, HP, POT, ELX, SOULS, MANA, STAM, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB, SE, MOB_SE
 
-    if not boss:
-        MOB = random.choice(biome[map[y][x]]["m"])
+    if DEATHS == 0:
+        MOB = "Divine Terror"
     else:
-        MOB = "Evil Wizard"
+        MOB = random.choice(biome[map[y][x]]["m"])
 
     MOB_HP = random.choice(mobs[MOB]["hp"])
     MOB_HPMAX = MOB_HP
     MOB_SOLS = random.choice(mobs[MOB]["sl"])
     MOB_AC = random.choice(mobs[MOB]["ac"])
     MOB_ATK = mobs[MOB]["dg"]
+    MOB_SE = []
     boss = False
 
     def mob_attack():
@@ -761,12 +802,14 @@ def battle():
         if random.randint(0,100) <= MOB_AC:
             HP -= mob_dmg
             print(MOB + " dealt " + str(mob_dmg) + " damage to " + hero_name + ".")
+            mob_effect(random.choice(mobs[MOB]["ef"]))
         else:
             print(MOB + " missed!")
-        mob_effect(random.choice(mobs[MOB]["ef"]))
 
     clear()
+    divide()
     print("A " + MOB + " wants to fight you!")
+    divide()
     input("> ")
 
     if STAM <= 0:
@@ -828,6 +871,8 @@ def battle():
                                 print(hero_name + " missed!")
                             if MOB_HP > 0:
                                 mob_attack()
+                                update_mob_se()
+                                update_player_se()
                             attack_menu = False
                         else:
                             print("Not enough STAMINA!")
@@ -869,6 +914,8 @@ def battle():
                             cast(rings[RING]["spell" + choice])
                             if MOB_HP > 0:
                                 mob_attack()
+                                update_mob_se()
+                                update_player_se()
                             cast_menu = False
                         else:
                             print("Not enough MANA!")
@@ -882,9 +929,10 @@ def battle():
         elif choice == "3":
             if POT > 0:
                 POT -= 1
+                SE = []
                 heal(POT_HEAL)
-                if MOB_HP > 0:
-                    mob_attack()
+                #if MOB_HP > 0:
+                #    mob_attack()
                 input("> ")
             else:
                 print("You are out of POTIONS!")
@@ -894,8 +942,8 @@ def battle():
             if ELX > 0:
                 ELX -= 1
                 mana_heal(ELX_HEAL)
-                if MOB_HP > 0:
-                    mob_attack()
+                #if MOB_HP > 0:
+                #    mob_attack()
                 input("> ")
             else:
                 print("You are out of ELIXERS!")
@@ -912,7 +960,57 @@ def battle():
                 input("> ")
 
         death_check()
- 
+
+def add_player_se(status):
+    global SE
+
+    if any(e[0] == status[0] for e in SE):
+        pass
+    else:
+        SE.append(status)
+
+def add_mob_se(status):
+    global MOB_SE
+    
+    if any(e[0] == status[0] for e in MOB_SE):
+        pass
+    else:
+        MOB_SE.append(status)
+      
+def update_player_se():
+    global SE, HP
+
+    for e in SE:
+        if e[0] == "poison":
+            HP -= e[2]
+            print(hero_name + " took " + str(e[2]) + " damage from being poisoned.")
+        elif e[0] == "burn":
+            HP -= e[2]
+            print(hero_name + " took " + str(e[2]) + " damage from being burned.")
+    
+    for i in range(len(SE)):
+        if SE[i][1] <= 1:
+            del SE[i]
+        else:
+            SE[i][1] -= 1
+
+def update_mob_se():
+    global MOB_SE, MOB_HP
+
+    for e in MOB_SE:
+        if e[0] == "poison":
+            MOB_HP -= e[2]
+            print(MOB + " took " + str(e[2]) + " damage from being poisoned.")
+        elif e[0] == "burn":
+            MOB_HP -= e[2]
+            print(MOB + " took " + str(e[2]) + " damage from being burned.")
+
+        for i in range(len(MOB_SE)):
+            if MOB_SE[i][1] <= 1:
+                del MOB_SE[i]
+            else:
+                MOB_SE[i][1] -= 1
+        
 def hideout():
     global hiding, WEAPON, RING, HP, MANA, STAM, SOULS, POT, ELX, LVL, MANA_MAX, HP_MAX, STAM_MAX
 
@@ -952,6 +1050,7 @@ def hideout():
                 divide()
                 for wep in range(len(WEAPON_STASH)):
                     print(str(wep + 1) + " - " + WEAPON_STASH[wep] + " - (" + str(weapons[WEAPON_STASH[wep]]["atk1"][1])  + " ATK)")
+                    print("    > " + weapons[WEAPON_STASH[wep]]["desc"])
                 print("Q - BACK")
                 
                 wep_choice = input("# ").upper()
@@ -977,6 +1076,7 @@ def hideout():
                 divide()
                 for r in range(len(RING_STASH)):
                     print(str(r + 1) + " - " + RING_STASH[r])
+                    print("    > " + rings[RING_STASH[r]]["desc"])
                 print("Q - BACK")
 
                 r_choice = input("# ").upper()
@@ -1145,7 +1245,12 @@ def draw_stats():
             print(t_red + "\u2588" + t_norm, end="")
         else:
             print(t_red + "_" + t_norm, end="")
-    print("  HP:   " + str(HP) + "/" + str(HP_MAX))
+    print("  HP:   " + str(HP) + "/" + str(HP_MAX), end="")
+    if any(e[0] == "burn" for e in SE):
+        print(t_red + " Burning!" + t_norm, end="")
+    if any(e[0] == "poison" for e in SE):
+        print(t_green + " Poisoned!" + t_norm, end="")
+    print("")
 
     for i in range (16):
         if i/16 < MANA/MANA_MAX:
@@ -1175,7 +1280,7 @@ def draw_stats():
         else:
             print(t_gray + "[]\033[0m ", end="")
     print()
-    print("SOULS: " + str(SOULS))  
+    print("SOULS: " + str(SOULS)) 
  
 def draw_actions():
     if y > 0:
@@ -1190,13 +1295,96 @@ def draw_actions():
         print("3 - use POTION")
     if ELX > 0:
         print("4 - use ELIXER")
-    if map[y][x] == "$" or map[y][x] == "K" or map[y][x] == "A" or map[y][x] == "H":
+    if (map[y][x] == "$" or map[y][x] == "K" or
+        map[y][x] == "A" or map[y][x] == "H"):
         print("E - ENTER")
     print("0 - SAVE AND QUIT")
+
+def slow_type(t):
+    for l in t:
+        sys.stdout.write(l)
+        sys.stdout.flush()
+        time.sleep(0.03)
+    print('')
+
+def check_dialogue():
+    global DEATHS
+
+    if DEATHS == 1:
+        DEATHS += 1
+        clear()
+        divide()
+        slow_type("Awake again... What is your name?")
+        divide()
+        input("> ")
+        slow_type("Oh?! You remember!")
+        divide()
+        input("> ")
+        clear()
+        divide()
+        slow_type(hero_name + ", this is great news!")
+        slow_type("I can see the confusion in your eyes. Please, allow me to explain.")
+        divide()
+        input("> ")
+        clear()
+        divide()
+        slow_type("My name is Nix! Your humble servant.")
+        slow_type("You were once known by the title of Pharasmanes the God King")
+        slow_type("and you ruled over these lands and its inhabitants for many millennia.")
+        divide()
+        input("> ")
+        clear()
+        divide()
+        slow_type("When your physical body deteriorated")
+        slow_type("or suffered mortal wounds, another vessel was provided.")
+        slow_type("Your Soul was transfered within seconds, and your rule could continue.")
+        divide()
+        input("> ")
+        clear()
+        divide()
+        slow_type("However, a few centuries ago, the inner members of your court...")
+        slow_type("Oventus the Broken, BOSS 2, BOSS 3, and BOSS 4...")
+        slow_type("Betrayed your majesty and turned your Divine Tower to ruins!")
+        divide()
+        input("> ")
+        clear()
+        divide()
+        slow_type("Without the facilities of the Divine Tower, your rebirths ceased.")
+        divide()
+        input("> ")
+        clear()
+        divide()
+        slow_type("For centuries, I have worked tirelessly, piecing together parts of your Divide Tower...")
+        slow_type("Trying endlessly to get your vessels and soul back.")
+        slow_type("It looks like it finally worked!")
+        divide()
+        input("> ")
+        clear()
+        divide()
+        slow_type("With these hundreds of years, I have also had time to create a network of tunnels...")
+        slow_type("that my small body can fit through.")
+        divide()
+        input("> ")
+        clear()
+        divide()
+        slow_type("Unfortunately, you are almost four times my size and will not be able to traverse them.")
+        slow_type("But, make it to any HIDEOUT location...")
+        slow_type("and I can hold onto excess supplies or mend your wounds.")
+        divide()
+        input("> ")
+        clear()
+        divide()
+        slow_type("Hone your skills once again by defeating the minions controlled by your Inner Court...")
+        slow_type("So that you may defeat the traitors and once again take your rightful place as God King!")
+        divide()
+        input("> ")
+        clear()
 
 while run:
     while menu:
         clear()
+        divide()
+        title()
         divide()
         print("1 - NEW GAME")
         print("2 - LOAD GAME")
@@ -1235,6 +1423,8 @@ while run:
             WEAPON_STASH = [START_WEAPON]
             RING_STASH = [START_RING]
             SPAWN = START_SPAWN
+            SE = START_SE
+            DEATHS = 0
 
             select = True
             while select:
@@ -1256,8 +1446,10 @@ while run:
                     select = False
                 input("> ")
             clear()
-            print("Awake again... What is your name?")
-            hero_name = input("input name# ")
+            slow_type("Awake again... What is your name?")
+            hero_name = input("# ")
+            slow_type("Hmm... What a shame. I thought we were getting somewhere last time. . .   ")
+            input("> ")
             if len(hero_name) == 0:
                 hero_name = "Hero"
             menu = False
@@ -1290,6 +1482,8 @@ while run:
                     GRAVE = ast.literal_eval(load_list[20])
                     GRAVE_SOULS = int(load_list[21][:-1])
                     SPAWN = ast.literal_eval(load_list[22])
+                    SE = ast.literal_eval(load_list[23])
+                    DEATHS = int(load_list[24][:-1])
                     clear()
 
                     print(hero_name, ": HP =", HP, "MANA = ", MANA, "STAM = ", STAM, "SOULS =", SOULS)
@@ -1320,7 +1514,7 @@ while run:
             SOULS += GRAVE_SOULS
             clear()
             divide()
-            print("You retrived %d SOULS!" % GRAVE_SOULS)
+            print("You retrived %d SOULS from your previous Vessel!" % GRAVE_SOULS)
             divide()
             GRAVE = [-100,-100]
             GRAVE_SOULS = 0
@@ -1338,6 +1532,7 @@ while run:
         if not standing and random.randint(1, 100) <= biome[map[y][x]]["e"]:
             fight = True
             battle()
+        check_dialogue()
 
         #Draw screen
         if play:
@@ -1349,6 +1544,7 @@ while run:
             divide()
             draw_actions()
             divide()
+            update_player_se()
 
             # Get input for actions
             dest = input("# ").upper()
@@ -1381,6 +1577,7 @@ while run:
                 if HP == HP_MAX:
                     print("You are already at MAX HP!")
                 else:
+                    SE = []
                     heal(POT_HEAL)
                     POT -= 1
             else:
