@@ -1,5 +1,4 @@
-from functools import update_wrapper
-import io
+
 import os
 import random
 import ast
@@ -25,7 +24,7 @@ START_WEAPON = "Fists"
 START_RING = "No Ring"
 START_SPAWN = (11, 11)
 START_SE = []
-STAT_LEN = 25
+STAT_LEN = 29
 
 #Grave vars
 GRAVE = [-100, -100]
@@ -84,6 +83,16 @@ select = False
 cast_menu = False
 attack_menu = False
 hiding = False
+boss1 = False
+boss2 = False
+boss3 = False
+boss4 = False
+boss1_dead = False
+boss2_dead = False
+boss3_dead = False
+boss4_dead = False
+peg1 = False
+peg2 = False
 
 #map of the corrupted lands
 map = [
@@ -100,15 +109,15 @@ map = [
     list("`########rrrr.........`"),
     list("`ssssssgr._Hr.........`"),
     list("`ssssssr..rr..........`"),
-    list("`Hsssrr,,,,r..........`"),
-    list("`sssr,,,,r,~..........`"),
-    list("`ssr/H,r...~..........`"),
-    list("`//////r,..~..........`"),
-    list("`r//r//r,..~..........`"),
-    list("`TTT///_...~..........`"),
-    list("`TTTTTT_TTT~..........`"),
-    list("`#_#TTT____~..........`"),
-    list("`H1#TTTTTTT~..........`"),
+    list("`Hsssrr,,,,rH.........`"),
+    list("`sssr,,,,r,~~~~~~~~~~~`"),
+    list("`ssr/H,r...~ddRdd#####`"),
+    list("`////_/r,..~dd_dd#_2_#`"),
+    list("`r//r_/r,..~dd_dd#p__#`"),
+    list("`TTT/_//...~dd_dd##_##`"),
+    list("`TTTT_TTTTT~dd_ddddddd`"),
+    list("`#_#T_TTTTT~TT_TTddddd`"),
+    list("`1_#T______=__H_____dd`"),
     list("```````````````````````")]
 
 y_len = len(map) - 1
@@ -120,8 +129,37 @@ t_red = "\033[91m"
 t_green = "\033[32m"
 t_yellow = "\033[93m"
 t_blue = "\033]94m"
+t_magenta = "\033[35m"
 
 biome = {
+    "p": {
+        "d": "O",
+        "t": "PEGASUS BURIAL CHAMBER",
+        "e": 0,
+        "m": ["Error"],
+        "w": True
+    },
+    "R": {
+        "d": t_red + "&" + t_norm,
+        "t": "THE REAPER",
+        "e": 100,
+        "m": ["Reaper"],
+        "w": True
+    },
+    "d": {
+        "d": t_gray + "T" + t_norm,
+        "t": t_magenta + "DARK FOREST" + t_norm,
+        "e": 75,
+        "m": ["Forest Spirit", "Banshee"],
+        "w": True
+    },
+    "=": {
+        "d": t_gray + "=" + t_norm,
+        "t": "BRIDGE",
+        "e": 100,
+        "m": ["Bridge Guardian"],
+        "w": True
+    },
     "s": {
         "d": t_gray + "." + t_norm,
         "t": t_green + "SWAMP" + t_norm,
@@ -131,9 +169,16 @@ biome = {
     },
     "1": {
         "d": t_yellow + "%" + t_norm,
-        "t": (t_yellow + "DEMIGOD OVENTUS" + t_norm),
-        "e": 100,
-        "m": [(t_yellow + "DEMIGOD OVENTUS" + t_norm)],
+        "t": (t_yellow + "INNER KEEP" + t_norm),
+        "e": 0,
+        "m": [("Error")],
+        "w": True
+    },
+    "2": {
+        "d": t_yellow + "V" + t_norm,
+        "t": (t_yellow + "MAUSOLEUM" + t_norm),
+        "e": 0,
+        "m": [("Error")],
         "w": True
     },
     "g": {
@@ -278,17 +323,6 @@ weapons = {
         "acc2": 100,
         "cost2": 6,
     },
-    "Steel Sword": {
-        "desc": "A sword capable of light and heavy attacks.",
-        "name1": "SLASH",
-        "atk1": ["basic", 8],
-        "acc1": 100,
-        "cost1": 0,
-        "name2": "HEAVY SLASH",
-        "atk2": ["basic", 14],
-        "acc2": 100,
-        "cost2": 6,
-    },
      "Iron Sword": {
          "desc": "A sword capable of light and heavy attacks.",
         "name1": "SLASH",
@@ -333,13 +367,33 @@ weapons = {
         "acc2": 100,
         "cost2": 6
     },
+    "Scythe": {
+        "desc": "A scythe capable of stealing the life force of opponents.",
+        "name1": "SLASH",
+        "atk1": ["basic", 25],
+        "acc1": 80,
+        "cost1": 0,
+        "name2": "REAP",
+        "atk2": ["lifesteal", 25, 25], #[move, dmg, heal]
+        "acc2": 100,
+        "cost2": 6,
+        "name3": "RECOVER 15 MANA",
+        "atk3": ["recover", 0, "m", 15],
+        "acc3": 100,
+        "cost3": 0,
+        "name4": "RECOVER 15 STAM",
+        "atk4": ["recover", 0, "s", 15],
+        "acc4": 100,
+        "cost4": 0
+    },
     "The Gideon": {
+        "desc": "A massive hammer with peculiar abilities.",
         "name1": "EARTH SHATTER",
-        "atk1": ["stager", 12, 5],
+        "atk1": ["stager", 20, 3],
         "acc1": 100,
         "cost1": 5,
-        "name2": "RECOVER STAM",
-        "atk2": ["recover", 0, "s", 5],
+        "name2": "RECOVER 15 STAM",
+        "atk2": ["recover", 0, "s", 15],
         "acc2": 100,
         "cost2": 0
     },
@@ -371,14 +425,32 @@ rings = {
     "No Ring": {
         "desc": ""
     },
+    "Thorny Ring": {
+        "desc": "heal (25HP) or blind your enimies with flames.",
+        "name1": "GREATER HEAL",
+        "spell1": ["heal", 25],
+        "cost1": 5,
+        "name2": "SCOARCH",
+        "spell2": ["flame2", 10, 12], #name, dmg, acc
+        "cost2": 8,
+    },
+    "Soulless Circle": {
+        "desc": "heal (15HP) or curse your enemies.",
+        "name1": "LESSER HEAL",
+        "spell1": ["heal", 15],
+        "cost1": 2,
+        "name2": "CURSE",
+        "spell2": ["curse", 10, 6], #name, dmg, turns
+        "cost2": 8,
+    },
     "Swamp Rot Ring": {
-        "desc": "heal or poison your enemies.",
+        "desc": "heal (8HP) or poison your enemies.",
         "name1": "LESSER HEAL",
         "spell1": ["heal", 8],
         "cost1": 5,
         "name2": "POISON",
-        "spell2": ["flame", 3, 20],
-        "cost2": 9,
+        "spell2": ["poison", 2 ,2], #name, dmg, turns
+        "cost2": 2,
     },
     "Taran's Ring": {
         "desc": "Blind your enemies with a powerful flame that lasts for multiple turns.",
@@ -390,17 +462,18 @@ rings = {
         "cost2": 7,
     },
     "Worshipper's Ring": {
-        "desc": "heal youself",
+        "desc": "heal (10HP) youself",
         "name1": "HEAL",
         "spell1": ["heal", 10],
+        "cost1": 12
     },
     "Emerald Ring" : {
         "desc": "A ring with many healing options",
         "name1": "LESSER HEAL",
-        "spell1": ["heal", 5],
-        "cost1": 3,
+        "spell1": ["heal", 8],
+        "cost1": 2,
         "name2": "HEAL",
-        "spell2": ["heal", 8],
+        "spell2": ["heal", 15],
         "cost2": 4,
         "name3": "LIFE STEAL",
         "spell3": ["lifesteal", 12, 6], #name, dmg, heal
@@ -418,20 +491,74 @@ mobs = {
         "ef": ["none"],
         "dp": []
     },
-    "\033[93mDEMIGOD OVENTUS\033[0m": {
-        "hp": [35],
-        "dg": [4],
+    "Wraith": {
+        "hp": [75,79,69,77],
+        "dg": [8,10,10,14],
+        "ac": [80],
+        "sl": [250],
+        "rn": [90],
+        "ef": [("lifesteal", 4), ("steal", 20)],
+        "dp": [("The Gideon", "w", 10)]
+    },
+    "Forest Spirit": {
+        "hp": [35,30,38,40],
+        "dg": [8,8,8,10],
+        "ac": [80],
+        "sl": [100],
+        "rn": [90],
+        "ef": ["lifesteal", 4],
+        "dp": [("Soulless Circle", "r", 30), ("The Gideon", "w", 10)]
+    },
+    "Banshee": {
+        "hp": [50],
+        "dg": [10,10,10,14],
+        "ac": [80],
+        "sl": [200],
+        "rn": [50],
+        "ef": ["curse"],
+        "dp": [("Thorny Ring", "r", 30), ("The Gideon", "w", 10)]
+    },
+    "Reaper": {
+        "hp": [200],
+        "dg": [15,16,17,18,19,20,21,22,23,24,25],
         "ac": [100],
         "sl": [200],
         "rn": [0],
-        "ef": ["lifesteal", 1],
+        "ef": ["curse"],
+        "dp": [("Scythe", "w", 100)]
+    },
+    "\033[93mDEMIGOD OVENTUS\033[0m": {
+        "hp": [35],
+        "dg": [8],
+        "ac": [100],
+        "sl": [200],
+        "rn": [0],
+        "ef": ["lifesteal", 2],
         "dp": [("Dual Bronze Rapiers", "w", 100)]
+    },
+    "\033[93mDEMIGOD KAR'EIL\033[0m": {
+        "hp": [150],
+        "dg": [20],
+        "ac": [125],
+        "sl": [1000],
+        "rn": [0],
+        "ef": ["lifesteal", 2],
+        "dp": [("Scythe", "w", 100)]
+    },
+    "Bridge Guardian": {
+        "hp": [80],
+        "dg": [15],
+        "ac": [100],
+        "sl": [50],
+        "rn": [0],
+        "ef": ["none"],
+        "dp": []
     },
     "Swamp Rot Wretch": {
         "hp": [17,18,20],
         "dg": [7,8,9],
         "ac": [90],
-        "sl": [20],
+        "sl": [20,30,40],
         "rn": [50],
         "ef": ["poison"],
         "dp": [("Swamp Rot Ring", "r", 80)]
@@ -440,7 +567,7 @@ mobs = {
         "hp": [12],
         "dg": [4,4,5],
         "ac": [75],
-        "sl": [12,13,14],
+        "sl": [12,13,14,20],
         "rn": [100],
         "ef": ["poison"],
         "dp": [("Swamp Rot Sword", "w", 100)]
@@ -461,7 +588,7 @@ mobs = {
         "sl": [15],
         "rn": [10],
         "ef": ["steal", 3],
-        "dp": [("Dagger", "w", 20)]
+        "dp": [("Dagger", "w", 40)]
     },
     "Skeleton": {
         "hp": [5,5,5,3,6,4],
@@ -482,7 +609,7 @@ mobs = {
         "dp": [("Rusty Sword", "w", 50), ("Taran's Ring", "r", 10), ("Dual Rapier", "w", 50)]
     },
     "Forest Sentinel": {
-        "hp": [20],
+        "hp": [20,21,23],
         "dg": [8,8,8,14],
         "ac": [70],
         "sl": [20,22,22,24,27],
@@ -492,11 +619,12 @@ mobs = {
     },
     "Divine Terror": {
         "hp": [666],
-        "dg": [3],
-        "ac": [100],
+        "dg": [6],
+        "ac": [666],
         "sl": [666],
         "rn": [0],
-        "ef": ["none"]
+        "ef": ["lifesteal", 6],
+        "dp": []
     }
 }
 
@@ -521,27 +649,47 @@ def divide():
 def header():
     print("NAME: " + hero_name + " | LEVEL: " + str(LVL) + " | LOCATION: " + biome[map[y][x]]["t"])
 
+def deaths_increase():
+    global DEATHS
+
+    DEATHS += 1
+
+def set_grave():
+    global GRAVE, GRAVE_SOULS
+
+    GRAVE = [x, y]
+    GRAVE_SOULS = int(SOULS / 2)
+
+def die():
+    global POT, ELX, SOULS, SE, x ,y, fight, boss1, boss2, boss3, boss4
+
+    fight = False
+    deaths_increase()
+    recover(10000)
+    mana_heal(10000)
+    heal(10000)
+    set_grave()
+    POT = 0
+    ELX = 0
+    SOULS = 0
+    SE = []
+    x = SPAWN[0]
+    y = SPAWN[1]
+    boss1 = False
+    boss2 = False
+    boss3 = False
+    boss4 = False
+
 def stam_use():
-    global POT, ELX, SOULS, x, y, STAM, HP, MANA, fight, GRAVE, GRAVE_SOULS, DEATHS
+    global POT, ELX, SOULS, STAM
 
     STAM -= 1
     if STAM < 0:
-        fight = False
-        GRAVE = [x, y]
-        GRAVE_SOULS = int(SOULS / 2)
-        DEATHS += 1
+        die()
         clear()
         divide()
         print("YOU DIED FROM EXHAUSTION!")
         divide()
-        x = SPAWN[0]
-        y = SPAWN[1]
-        SOULS = 0
-        ELX = 0
-        POT = 0
-        STAM = STAM_MAX
-        MANA = MANA_MAX
-        HP = HP_MAX
         input("> ")
         clear()
 
@@ -571,7 +719,11 @@ def save():
         str(GRAVE_SOULS),
         str(SPAWN),
         str(SE),
-        str(DEATHS)
+        str(DEATHS),
+        str(boss1_dead),
+        str(boss2_dead),
+        str(boss3_dead),
+        str(boss4_dead),
     ]
 
     f = open("load.txt", "w")
@@ -603,6 +755,11 @@ def mana_heal(amount):
         MANA = MANA_MAX
     print(str(temp) + " added to " + hero_name + "'s MANA.")
     print(hero_name + "'s" + " MANA has been increased to " + str(MANA) + "!")
+
+def add_souls(amount):
+    global SOULS
+
+    SOULS += amount
 
 def recover(amount):
     global STAM
@@ -642,6 +799,9 @@ def mob_effect(effect):
     elif effect == "burn":
         add_player_se(["burn", 2, 2])
         print(hero_name + " has been BURNED for 2 HP for 2 turns!")
+    elif effect == "curse":
+        add_player_se(["curse", 10, 2, 1])
+        print(hero_name + " has been CURSED for 2 HP and 1 MANA for 10 turns!")
 
 def draw_mob_stats():
     global MOB, MOB_HP, MOB_HPMAX, MOB_ATK
@@ -656,42 +816,31 @@ def draw_mob_stats():
         print(t_red + " Burning!" + t_norm, end="")
     if any(e[0] == "poison" for e in MOB_SE):
         print(t_green + " Poisoned!" + t_norm, end="")
+    if any(e[0] == "curse" for e in MOB_SE):
+        print(t_magenta + " Cursed!" + t_norm, end="")
     print("")
     print("ATK: " + str(MOB_ATK[0]) + " - " + str(MOB_ATK[-1]))
 
 def death_check():
-    global fight, run, POT, ELX, SOULS, x, y, MOB_SOLS, MOB, cast_menu, attack_menu, WEAPON_STASH, RING_STASH, HP, STAM, MANA, GRAVE, GRAVE_SOULS, DEATHS, SE
+    global cast_menu, attack_menu, WEAPON_STASH, RING_STASH, boss1_dead, boss2_dead, boss3_dead, boss4_dead, fight, boss1, boss2, boss3, boss4
 
     if HP <= 0:
-        GRAVE = [x, y]
-        GRAVE_SOULS = int(SOULS / 2)
+        cast_menu = False
+        attack_menu = False
+        die()
         clear()
         divide()
         print("The " + MOB + " defeated " + hero_name + "...")
         divide()
-        fight = False
-        cast_menu = False
-        attack_menu = False
-        x = SPAWN[0]
-        y = SPAWN[1]
-        SOULS = 0
-        ELX = 0
-        POT = 0
-        HP = HP_MAX
-        MANA = MANA_MAX
-        STAM = STAM_MAX
-        SE = []
-        DEATHS += 1
         print("YOU DIED")
         divide()
         input("> ")
         clear()
-        print(str(random.randint(18, 45)) + " years later...")
+        print(str(random.randint(18, 35)) + " years later...")
         input("> ")
         clear()
         
     if MOB_HP <= 0:
-        divide()
         clear()
         divide()
         print(hero_name + " defeated the " + MOB + "!")
@@ -699,9 +848,8 @@ def death_check():
         fight = False
         cast_menu = False
         attack_menu = False
-        SOULS += MOB_SOLS
-        print("You aquired " + str(MOB_SOLS) + " SOULS from the " + MOB + "!")
-        
+        add_souls(MOB_SOLS)
+        print("You aquired " + str(MOB_SOLS) + " SOULS from the " + MOB + "!")     
         drop_list = mobs[MOB]["dp"]
         for i in drop_list:
             if random.randint(1,100) < i[2]:
@@ -711,19 +859,30 @@ def death_check():
                 if i[1] == "r" and i[0] not in RING_STASH:
                     RING_STASH.append(i[0])
                     print("You found a " + i[0] + "! - Equip it at any Hideout location.")
+        if boss1:
+            boss1_dead = True
+        if boss2:
+            boss2_dead = True
+        if boss3:
+            boss3_dead = True
+        if boss4:
+            boss4_dead = True
+        boss1 = False
+        boss2 = False
+        boss3 = False
+        boss4 = False
         divide()
         input("> ")
         clear()
 
-def cast(spell):
-    global HP, MANA, STAM, WEAPON, RING, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB
+def cast(s):
+    global MOB_HP, MOB_ATK, MOB_AC, SE
+
+    spell = s
 
     if spell[0] == "heal":
-        if HP + spell[1] < HP_MAX:
-            HP += spell[1]
-        else:
-            HP = HP_MAX
-        print(hero_name + "'s" + " HP has been increased to " + str(HP) + "!")
+        heal(spell[1])
+        SE = []
 
     if spell[0] == "flame":
         MOB_HP -= spell[1]
@@ -731,12 +890,25 @@ def cast(spell):
         print(hero_name + " did " + str(spell[1]) + " damage to " + MOB + " with their spell!")
         print(MOB + "'s accuracy has been decreased by " + str(spell[2]) + "%!")
         add_mob_se(["burn", 2, 2])
+
+    if spell[0] == "flame2":
+        MOB_HP -= spell[1]
+        MOB_AC = MOB_AC * ((100 - spell[2]) / 100)
+        print(hero_name + " did " + str(spell[1]) + " damage to " + MOB + " with their spell!")
+        print(MOB + "'s accuracy has been decreased by " + str(spell[2]) + "%!")
+        add_mob_se(["burn", 5, 5])
     
     if spell[0] == "burn":
-        add_mob_se(["burn", 2, 2])
+        add_mob_se(spell)
+    
+    if spell[0] == "poison":
+        add_mob_se(spell)
+    
+    if spell[0] == "curse":
+        add_mob_se(spell)
     
 def attack(move):
-    global HP, MANA, STAM, WEAPON, RING, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB
+    global MOB_HP, MOB_ATK, MOB_AC
 
     if move[0] == "none":
         pass
@@ -771,8 +943,10 @@ def attack(move):
     if move[0] == "recover":
         if move[2] == "s":
             recover(move[3])
+            print(hero_name + " recovered " + str(move[3]) + " STAM!")
         if move[2] == "m":
             mana_heal(move[2])
+            print(hero_name + " recovered " + str(move[3]) + " MANA!")
     
     if move[0] == "lifesteal":
         MOB_HP -= move[1]
@@ -780,9 +954,17 @@ def attack(move):
         print(hero_name + " stole " + str(move[2]) + " health from " + MOB + "!")
 
 def battle():
-    global fight, boss, HP, POT, ELX, SOULS, MANA, STAM, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB, SE, MOB_SE
+    global fight, HP, POT, ELX, SOULS, MANA, STAM, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB, SE, MOB_SE
 
-    if DEATHS == 0:
+    if DEATHS == 0 or DEATHS % 13 == 0:
+        MOB = "Divine Terror"
+    elif boss1:
+        MOB = "\033[93mDEMIGOD OVENTUS\033[0m"
+    elif boss2:
+        MOB = "\033[93mDEMIGOD KAR'EIL\033[0m"
+    elif boss3:
+        MOB = "Divine Terror"
+    elif boss4:
         MOB = "Divine Terror"
     else:
         MOB = random.choice(biome[map[y][x]]["m"])
@@ -793,7 +975,6 @@ def battle():
     MOB_AC = random.choice(mobs[MOB]["ac"])
     MOB_ATK = mobs[MOB]["dg"]
     MOB_SE = []
-    boss = False
 
     def mob_attack():
         global HP
@@ -869,10 +1050,10 @@ def battle():
                                 attack(weapons[WEAPON]["atk" + choice])
                             else:
                                 print(hero_name + " missed!")
+                            update_player_se()
                             if MOB_HP > 0:
                                 mob_attack()
                                 update_mob_se()
-                                update_player_se()
                             attack_menu = False
                         else:
                             print("Not enough STAMINA!")
@@ -912,10 +1093,10 @@ def battle():
                         if MANA >= rings[RING]["cost" + choice]:
                             MANA -= rings[RING]["cost" + choice]
                             cast(rings[RING]["spell" + choice])
+                            update_player_se()
                             if MOB_HP > 0:
                                 mob_attack()
                                 update_mob_se()
-                                update_player_se()
                             cast_menu = False
                         else:
                             print("Not enough MANA!")
@@ -931,8 +1112,6 @@ def battle():
                 POT -= 1
                 SE = []
                 heal(POT_HEAL)
-                #if MOB_HP > 0:
-                #    mob_attack()
                 input("> ")
             else:
                 print("You are out of POTIONS!")
@@ -942,8 +1121,6 @@ def battle():
             if ELX > 0:
                 ELX -= 1
                 mana_heal(ELX_HEAL)
-                #if MOB_HP > 0:
-                #    mob_attack()
                 input("> ")
             else:
                 print("You are out of ELIXERS!")
@@ -955,8 +1132,8 @@ def battle():
                 input("> ")
                 fight = False
             else:
-                mob_attack()
                 print("The " + MOB + " stopped you from fleeing!")
+                mob_attack()
                 input("> ")
 
         death_check()
@@ -978,7 +1155,7 @@ def add_mob_se(status):
         MOB_SE.append(status)
       
 def update_player_se():
-    global SE, HP
+    global SE, HP, MANA
 
     for e in SE:
         if e[0] == "poison":
@@ -987,6 +1164,11 @@ def update_player_se():
         elif e[0] == "burn":
             HP -= e[2]
             print(hero_name + " took " + str(e[2]) + " damage from being burned.")
+        elif e[0] == "curse":
+            HP -= e[2]
+            MANA -= e[3]
+            print(hero_name + " took " + str(e[2]) + " damage and had " + str(e[3]) + " mana drained from being cursed.")
+    
     
     for i in range(len(SE)):
         if SE[i][1] <= 1:
@@ -1004,6 +1186,9 @@ def update_mob_se():
         elif e[0] == "burn":
             MOB_HP -= e[2]
             print(MOB + " took " + str(e[2]) + " damage from being burned.")
+        elif e[0] == "curse":
+            MOB_HP -= e[2]
+            print(MOB + " took " + str(e[2]) + " damage from being cursed.")
 
         for i in range(len(MOB_SE)):
             if MOB_SE[i][1] <= 1:
@@ -1050,7 +1235,6 @@ def hideout():
                 divide()
                 for wep in range(len(WEAPON_STASH)):
                     print(str(wep + 1) + " - " + WEAPON_STASH[wep] + " - (" + str(weapons[WEAPON_STASH[wep]]["atk1"][1])  + " ATK)")
-                    print("    > " + weapons[WEAPON_STASH[wep]]["desc"])
                 print("Q - BACK")
                 
                 wep_choice = input("# ").upper()
@@ -1062,6 +1246,7 @@ def hideout():
                     if 0 < int(wep_choice) <= int(len(WEAPON_STASH)):
                         WEAPON = WEAPON_STASH[int(wep_choice) - 1]
                         print("You've equipped " + WEAPON)
+                        print("    - " + weapons[WEAPON_STASH[int(wep_choice) - 1]]["desc"])
                         input("> ")
 
         if choice == "2":
@@ -1076,7 +1261,6 @@ def hideout():
                 divide()
                 for r in range(len(RING_STASH)):
                     print(str(r + 1) + " - " + RING_STASH[r])
-                    print("    > " + rings[RING_STASH[r]]["desc"])
                 print("Q - BACK")
 
                 r_choice = input("# ").upper()
@@ -1088,6 +1272,7 @@ def hideout():
                     if 0 < int(r_choice) <= int(len(RING_STASH)):
                         RING = RING_STASH[int(r_choice) - 1]
                         print("You've equipped " + RING)
+                        print("    - " + rings[RING_STASH[int(r_choice) - 1]]["desc"])
                         input("> ")
         
         if choice == "3":
@@ -1097,7 +1282,7 @@ def hideout():
                 if SOULS >= 10:
                     POT += 1
                     SOULS -= 10
-                    print("You've bought a POTION!")
+                    print("You've crafted a POTION!")
                 else:
                     print("Not enough SOULS!")
             input("> ")
@@ -1109,7 +1294,7 @@ def hideout():
                 if SOULS >= 10:
                     ELX += 1
                     SOULS -= 10
-                    print("You've bought an ELIXER!")
+                    print("You've crafted an ELIXER!")
                 else:
                     print("Not enough SOULS!")
             input("> ")
@@ -1185,6 +1370,168 @@ def academy():
         elif choice == "2":
             boss = False
 
+def pegasus1():
+    global peg1, x, y
+
+    while peg1:
+        if boss2_dead:
+            clear()
+            divide()
+            slow_type(hero_name + ", you've freed me from Kar'iel's prison.")
+            slow_type("Allow me to take you to the foot of the Inner Court's Castle?")
+            divide()
+            print("1 - Accept")
+            print("2 - Decline")
+            divide()
+            choice = input("# ")
+
+            if choice == "1" and boss2_dead:
+                clear()
+                divide()
+                slow_type("The creature's wings unfurl, its hooves stomp.")
+                slow_type("You climb ontop of the Nobel Beast.")
+                slow_type("You both rise far above the Mausoleum.")
+                slow_type("A massive castle is on the horizon...")
+                x = 12
+                y = 13
+                peg1 = False
+            elif choice == "2":
+                peg1 = False
+        else:
+            clear()
+            divide()
+            slow_type(hero_name + ", my name is Jerri. My kind is known by many names...")
+            slow_type("But the most accurate description is probably a Pegasus.")
+            slow_type("I have no steak in the Humans' futile wars...")
+            slow_type("But if you can release me from this prison...")
+            slow_type("I will be able to assist you on your journey.")
+            divide()
+            input("> ")
+            peg1 = False
+
+def fight_boss1():
+    global boss1, fight
+
+    while boss1:
+        clear()
+        divide()
+        slow_type("You approach the Inner Keep of a decrepit castle")
+        slow_type("The ground squelches with every step, and the air smells of filth.")
+        slow_type("Deranged laughter eminates from behind the veil of darkness")
+        divide()
+        print("1 - ENTER KEEP")
+        print("2 - TURN BACK")
+        divide()
+
+        choice = input("# ")
+
+        if choice == "1":
+            clear()
+            divide()
+            slow_type("A disfigured monstosity is seated at the back of the Inner Keep.")
+            slow_type("Its mismatched body parts beckon you closer.")
+            slow_type('The mouth on its stomach cries out "Father!"')
+            slow_type('The mouth on its leg screams pained non-sense.')
+            slow_type("Finally, the four mouths on it head speak...")
+            divide()
+            input("> ")
+            clear()
+            divide()
+            slow_type("PHARASMANES HURT OVENTUS!")
+            slow_type("WE KILL PHARASMANES!")
+            slow_type("HE PROMISED PAIN WOULD END...")
+            slow_type("DIE DIE DIE!")
+            divide()
+            input("> ")
+            fight = True
+            battle()
+        elif choice == "2":
+            boss1 = False
+
+def fight_boss2():
+    global boss2, fight
+
+    while boss2:
+        clear()
+        divide()
+        slow_type("The silence is deafening...")
+        print("1 - DESCEND INTO THE MAUSOLEUM")
+        print("2 - TURN BACK")
+        divide()
+
+        choice = input("# ")
+
+        if choice == "1":
+            clear()
+            divide()
+            slow_type("So, Parasmanes... I hear you go by " + hero_name + " now...")
+            slow_type("Simply changing your name cannot absolve you of your past sins.")
+            divide()
+            input("> ")
+            clear()
+            divide()
+            slow_type("Huh, you truly do not remember. Do you?")
+            divide()
+            input("> ")
+            clear()
+            divide()
+            slow_type("It appears you have already seen Oventus.")
+            slow_type("You were the one who turned him into that abomination.")
+            slow_type("Your pursuit of immortality left a wake of destruction.")
+            divide()
+            input("> ")
+            clear()
+            divide()
+            slow_type("The penance for your sins is death.")
+            slow_type("Let it be I, Kar'iel the Harvester, who facilitates your repentance!")
+            slow_type("I will cull you as many times as it takes!")
+            divide()
+            input("> ")
+            fight = True
+            battle()
+        elif choice == "2":
+            boss2 = False
+
+def fight_boss3():
+    global boss3, fight
+
+    while boss3:
+        clear()
+        divide()
+        slow_type("")
+        print("1 - ENTER KEEP")
+        print("2 - TURN BACK")
+        divide()
+
+        choice = input("# ")
+
+        if choice == "1":
+            slow_type("")
+            fight = True
+            battle()
+        elif choice == "2":
+            boss3 = False
+
+def fight_boss4():
+    global boss4, fight
+
+    while boss4:
+        clear()
+        divide()
+        slow_type("")
+        print("1 - ENTER KEEP")
+        print("2 - TURN BACK")
+        divide()
+
+        choice = input("# ")
+
+        if choice == "1":
+            slow_type("")
+            fight = True
+            battle()
+        elif choice == "2":
+            boss4 = False
+
 def draw_map():
     global SEEN_TILES
 
@@ -1250,6 +1597,8 @@ def draw_stats():
         print(t_red + " Burning!" + t_norm, end="")
     if any(e[0] == "poison" for e in SE):
         print(t_green + " Poisoned!" + t_norm, end="")
+    if any(e[0] == "curse" for e in SE):
+        print(t_magenta + " Cursed!" + t_norm, end="")
     print("")
 
     for i in range (16):
@@ -1296,7 +1645,9 @@ def draw_actions():
     if ELX > 0:
         print("4 - use ELIXER")
     if (map[y][x] == "$" or map[y][x] == "K" or
-        map[y][x] == "A" or map[y][x] == "H"):
+        (map[y][x] == "1" and not boss1_dead) or
+        (map[y][x] == "2" and not boss2_dead) or
+        map[y][x] == "H" or map[y][x] == "p"):
         print("E - ENTER")
     print("0 - SAVE AND QUIT")
 
@@ -1308,10 +1659,9 @@ def slow_type(t):
     print('')
 
 def check_dialogue():
-    global DEATHS
 
     if DEATHS == 1:
-        DEATHS += 1
+        die()
         clear()
         divide()
         slow_type("Awake again... What is your name?")
@@ -1343,7 +1693,10 @@ def check_dialogue():
         clear()
         divide()
         slow_type("However, a few centuries ago, the inner members of your court...")
-        slow_type("Oventus the Broken, BOSS 2, BOSS 3, and BOSS 4...")
+        slow_type("Oventus the Broken...")
+        slow_type("Kar'eil the Harvester...")
+        slow_type("BOSS3")
+        slow_type("BOSS4")
         slow_type("Betrayed your majesty and turned your Divine Tower to ruins!")
         divide()
         input("> ")
@@ -1354,7 +1707,7 @@ def check_dialogue():
         input("> ")
         clear()
         divide()
-        slow_type("For centuries, I have worked tirelessly, piecing together parts of your Divide Tower...")
+        slow_type("For centuries, I have worked tirelessly, piecing together parts of your Divine Tower...")
         slow_type("Trying endlessly to get your vessels and soul back.")
         slow_type("It looks like it finally worked!")
         divide()
@@ -1374,7 +1727,8 @@ def check_dialogue():
         input("> ")
         clear()
         divide()
-        slow_type("Hone your skills once again by defeating the minions controlled by your Inner Court...")
+        slow_type("Do not fear death, for you are no stranger to it.")
+        slow_type("Hone your skills by defeating the minions controlled by your Inner Court...")
         slow_type("So that you may defeat the traitors and once again take your rightful place as God King!")
         divide()
         input("> ")
@@ -1473,7 +1827,7 @@ while run:
                     x = int(load_list[11][:-1])
                     y = int(load_list[12][:-1])
                     SEEN_TILES = ast.literal_eval(load_list[13])
-                    key = bool(load_list[14][:-1])
+                    key = ast.literal_eval(load_list[14])
                     operating_system = str(load_list[15][:-1])
                     WEAPON = str(load_list[16][:-1])
                     RING = str(load_list[17][:-1])
@@ -1484,8 +1838,12 @@ while run:
                     SPAWN = ast.literal_eval(load_list[22])
                     SE = ast.literal_eval(load_list[23])
                     DEATHS = int(load_list[24][:-1])
+                    boss1_dead = ast.literal_eval(load_list[25])
+                    boss2_dead = ast.literal_eval(load_list[26])
+                    boss3_dead = ast.literal_eval(load_list[27])
+                    boss4_dead = ast.literal_eval(load_list[28])
+                    
                     clear()
-
                     print(hero_name, ": HP =", HP, "MANA = ", MANA, "STAM = ", STAM, "SOULS =", SOULS)
                     print("welcome back, " + hero_name + "!")
                     input("> ")
@@ -1601,11 +1959,23 @@ while run:
             if map[y][x] == "K":
                 speak = True
                 king()
-            if map[y][x] == "A":
-                boss = True
-                academy()
+            if map[y][x] == "1" and not boss1_dead:
+                boss1 = True
+                fight_boss1()
+            if map[y][x] == "2" and not boss2_dead:
+                boss2 = True
+                fight_boss2()
+            if map[y][x] == "3" and not boss3_dead:
+                boss3 = True
+                fight_boss3()
+            if map[y][x] == "4" and not boss4_dead:
+                boss4 = True
+                fight_boss4()                
             if map[y][x] == "H":
                 hiding = True
                 hideout()
+            if map[y][x] == "p":
+                peg1 = True
+                pegasus1()
         else:
             standing = True
