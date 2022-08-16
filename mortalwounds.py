@@ -2198,7 +2198,13 @@ while run:
         if rules:
             clear()
             divide()
-            print("These are the rules.")
+            print("A \"#\" requires input from the player.")
+            print("A \">\" requires pressing enter/return from the player.")
+            print("Death will result in all POTIONS, ELIXERS, and SOULS being lost.")
+            print("Hideouts are denoted by a white H on the map.")
+            print("Visiting a Hideout tile will replenish HP, MANA, and STAM.")
+            print("Once a weapons or ring is found, they will always be available...")
+            print("to be equipped at any hideout location")
             divide()
             rules = False
             choice = ""
