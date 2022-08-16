@@ -1,4 +1,3 @@
-
 import os
 import random
 import ast
@@ -24,7 +23,7 @@ START_WEAPON = "Fists"
 START_RING = "No Ring"
 START_SPAWN = (11, 11)
 START_SE = []
-STAT_LEN = 29
+STAT_LEN = 28
 
 #Grave vars
 GRAVE = [-100, -100]
@@ -61,7 +60,7 @@ WEAPON_STASH = [START_WEAPON]
 RING_STASH = [START_RING]
 SPAWN = START_SPAWN
 SE = START_SE
-DEATHS = 0
+DEATHS = -1
 
 #Game starting variables
 LVL_COST = 10
@@ -86,53 +85,131 @@ hiding = False
 boss1 = False
 boss2 = False
 boss3 = False
-boss4 = False
 boss1_dead = False
 boss2_dead = False
 boss3_dead = False
-boss4_dead = False
 peg1 = False
-peg2 = False
+chest1 = False
 
-#map of the corrupted lands
+#map of the playable area
 map = [
-    list("```````````````````````"),
-    list("`.....................`"),
-    list("`.....................`"),
-    list("`.....................`"),
-    list("`.....................`"),
-    list("`.....................`"),
-    list("`.....................`"),
-    list("`.....................`"),
-    list("`.....................`"),
-    list("`.....................`"),
-    list("`########rrrr.........`"),
-    list("`ssssssgr._Hr.........`"),
-    list("`ssssssr..rr..........`"),
-    list("`Hsssrr,,,,rH.........`"),
-    list("`sssr,,,,r,~~~~~~~~~~~`"),
-    list("`ssr/H,r...~ddRdd#####`"),
-    list("`////_/r,..~dd_dd#_2_#`"),
-    list("`r//r_/r,..~dd_dd#p__#`"),
-    list("`TTT/_//...~dd_dd##_##`"),
-    list("`TTTT_TTTTT~dd_ddddddd`"),
-    list("`#_#T_TTTTT~TT_TTddddd`"),
-    list("`1_#T______=__H_____dd`"),
-    list("```````````````````````")]
+    list("~~~~~~~~~~~~~~~~~~~~~~~"),
+    list("~Hooo~ooooo~bbb,,,/tdH~"),
+    list("~o~~W~o~~~o~bbb,,,/tdd~"),
+    list("~ooo~H~oooo~bbb,,,/ttt~"),
+    list("~~o~~o~~~~o~bbb,,,////~"),
+    list("~~oooooooooHbbbd,,,,,,~"),
+    list("~################H#####"),
+    list("~#xxxxxnxxxfxxxxxx#x$x#"),
+    list("~#Kxwxxxxexxxxxxxx#xxx#"),
+    list("~############exwfxxnxe#"),
+    list("~~~~~~~~~rrr#x##wew##x#"),
+    list("~ssssssGr._H#f##nxw##n#"),
+    list("~ssssssr..rr#xxxx3xxxx#"),
+    list("~Hsssrr,,,,r###########"),
+    list("~sssr,,,,r,~~~~~~~~~~~~"),
+    list("~ssr/H,r...~ddRdd#####~"),
+    list("~////_/r,..~d,dd,#_2_#~"),
+    list("~r//r_/r,.P~ddd,,#___#~"),
+    list("~ttt/_//...~,,dd,##_##~"),
+    list("~tttt_ttttt~d,,,ddddd,~"),
+    list("##_#t_ttttt~dd,d,dd_,d~"),
+    list("#1_#t___H__=__H_____dd~"),
+    list("####~~~~~~~~~~~~~~~~~~~")]
 
 y_len = len(map) - 1
 x_len = len(map[0]) - 1
 
+#color values
 t_norm = "\033[0m"
 t_gray = "\033[90m"
 t_red = "\033[91m"
 t_green = "\033[32m"
 t_yellow = "\033[93m"
-t_blue = "\033]94m"
+t_blue = "\033[34m"
 t_magenta = "\033[35m"
 
+#elements
+e_light = "Light"
+e_dark = t_magenta + "Dark" + t_norm
+e_fire = t_red + "Fire" + t_norm 
+e_water = t_blue + "Water" + t_norm
+e_earth = t_green + "Earth" + t_norm
+e_shock = t_yellow + "Shock" + t_norm
+e_blunt = t_gray + "Blunt" + t_norm
+
 biome = {
-    "p": {
+    "W": {
+        "d": t_red + "&" + t_norm,
+        "t": t_red + "KRAKEN" + t_norm,
+        "e": 100,
+        "m": ["Kraken"],
+        "w": True
+    },
+    "o": {
+        "d": t_gray + "o" + t_norm,
+        "t": "SAND BAR",
+        "e": 15,
+        "m": ["Kraken Tentacle", "Siren"],
+        "w": True
+    },
+    "b": {
+        "d": t_gray + "B" + t_norm,
+        "t": "BEACH",
+        "e": 50,
+        "m": ["Sea Wyrm", "Sea Wyrm", "Whet Blade Barbarian", "Whet Blade Barbarian", "Sand Trap Crater"],
+        "w": True
+    },
+    "K": {
+        "d": t_red + "&" + t_norm,
+        "t": t_red + "KEY BEARER" + t_norm,
+        "e": 100,
+        "m": ["Key Bearer"],
+        "w": True
+    },
+    "$": {
+        "d": t_norm + "$" + t_norm,
+        "t": "TREASURE CHEST",
+        "e": 0,
+        "m": ["Error"],
+        "w": True
+    },
+    "e": {
+        "d": t_yellow+"."+t_norm,
+        "t": t_yellow+"CASTLE"+t_norm,
+        "e": 100,
+        "m": ["Electric Exo-Knight"],
+        "w": True
+    },
+    "w": {
+        "d": t_blue+"."+t_norm,
+        "t": t_blue+"CASTLE"+t_norm,
+        "e": 100,
+        "m": ["Hydro Exo-Knight"],
+        "w": True
+    },
+    "n": {
+        "d": t_green+"."+t_norm,
+        "t": t_green+"CASTLE"+t_norm,
+        "e": 100,
+        "m": ["Nuclear Exo-Knight"],
+        "w": True
+    },
+    "f": {
+        "d": t_red+"."+t_norm,
+        "t": t_red+"CASTLE"+t_norm,
+        "e": 100,
+        "m": ["Combustion Exo-Knight"],
+        "w": True
+    },
+    "x": {
+        "d": ".",
+        "t": "CASTLE",
+        "e": 15,
+        "m": ["Automaton"],
+        "w": True
+    },
+    "P": {
         "d": "O",
         "t": "PEGASUS BURIAL CHAMBER",
         "e": 0,
@@ -141,7 +218,7 @@ biome = {
     },
     "R": {
         "d": t_red + "&" + t_norm,
-        "t": "THE REAPER",
+        "t": t_red + "THE REAPER" + t_norm,
         "e": 100,
         "m": ["Reaper"],
         "w": True
@@ -181,7 +258,14 @@ biome = {
         "m": [("Error")],
         "w": True
     },
-    "g": {
+    "3": {
+        "d": t_yellow + "@" + t_norm,
+        "t": (t_yellow + "CLONING CHAMBER" + t_norm),
+        "e": 0,
+        "m": [("Error")],
+        "w": True
+    },
+    "G": {
         "d": t_red + "&" + t_norm,
         "t": "THE CURSED GREEN KNIGHT",
         "e": 100,
@@ -201,13 +285,6 @@ biome = {
         "e": 0,
         "m": ["Error"],
         "w": True
-    },
-    "`": {
-        "d": " ",
-        "t": "\033[2mWORLDS EDGE\033[0m",
-        "e": 0,
-        "m": ["Error"],
-        "w": False
     },
     "_": {
         "d": "\033[2m_\033[0m",
@@ -251,179 +328,325 @@ biome = {
         "m": ["Skeleton", "Bandit", "Scavenger", "Scavenger"],
         "w": True
     },
-    "A": {
-        "d": "A",
-        "t": "ACADEMY",
-        "e": 0,
-        "m": ["Error"],
-        "w": True
-    },
-    "M": {
-        "d": "\033[2mM\033[0m",
-        "t": "MOUNTAINS",
-        "e": 0,
-        "m": ["Error"],
-        "w": True
-    },
-    "T": {
+    "t": {
         "d": "\033[2mT\033[0m",
         "t": "FOREST",
         "e": 75,
         "m": ["Skeleton", "Forest Sentinel", "Forest Sentinel"],
         "w": True
     },
-    "K": {
-        "d": "K",
-        "t": "KING",
-        "e": 0,
-        "m": ["Error"],
-        "w": True
-    }
 }
 
 weapons = {
     "No Weapon": {
+        "desc": "Your bare hands.",
+        "element": [e_blunt],
         "name1": "None",
         "atk1": ["none"],
+        "ele1": [e_blunt],
         "acc1": 100,
         "cost1": 0,
     },
     "Fists": {
         "desc": "Your bare hands.",
+        "element": [],
         "name1": "PUNCH",
         "atk1": ["basic", 1],
+        "ele1": [],
         "acc1": 100,
         "cost1": 0,
     },
     "Bone Club": {
         "desc": "A small bone club only slightly more effective than your fists",
+        "element": [e_blunt],
         "name1": "STRIKE",
-        "atk1": ["basic", 2],
+        "atk1": ["basic", 4],
+        "ele1": [e_blunt],
         "acc1": 90,
         "cost1": 0,
-    },
-    "Damascus Steel Sword": {
-        "name1": "SLASH",
-        "atk1": ["basic", 16],
-        "acc1": 100,
-        "cost1": 0,
-        "name2": "HEAVY SLASH",
-        "atk2": ["basic", 30],
-        "acc2": 100,
-        "cost2": 10,
-    },
-    "Swamp Rot Sword": {
-        "desc": "High basic damage but at the cost of stamina.",
-        "name1": "SLASH",
-        "atk1": ["basic", 7],
-        "acc1": 100,
-        "cost1": 1,
-        "name2": "HEAVY SLASH",
-        "atk2": ["basic", 10],
-        "acc2": 100,
-        "cost2": 6,
-    },
-     "Iron Sword": {
-         "desc": "A sword capable of light and heavy attacks.",
-        "name1": "SLASH",
-        "atk1": ["basic", 8],
-        "acc1": 100,
-        "cost1": 0,
-        "name2": "HEAVY SLASH",
-        "atk2": ["basic", 10],
-        "acc2": 100,
-        "cost2": 3,
     },
     "Rusty Sword": {
         "desc": "A sword capable of light and heavy attacks.",
+        "element": [e_blunt],
         "name1": "SLASH",
-        "atk1": ["basic", 3],
+        "atk1": ["basic", 4],
+        "ele1": [e_blunt],
         "acc1": 90,
         "cost1": 0,
         "name2": "HEAVY SLASH",
-        "atk2": ["basic", 5],
+        "atk2": ["basic", 7],
+        "ele2": [e_blunt],
         "acc2": 100,
         "cost2": 3,
     },
-    "Dual Rapier": {
-        "desc": "A sword that trades combo-damage for accuracy.",
+    "Swamp Rot Sword": {
+        "desc": "High basic damage but at the cost of stamina.",
+        "element": [e_earth, e_blunt],
         "name1": "SLASH",
-        "atk1": ["basic", 3],
-        "acc1": 75,
-        "cost1": 0,
-        "name2": "DOUBLE SLASH",
-        "atk2": ["double", 3, 100, 2, 75, 1], #[move, dmg, acc, dmg2, acc2, combo dmg]
-        "acc2": 100,
-        "cost2": 3
-    },
-    "Dual Bronze Rapiers": {
-        "desc": "A sword capable of light and powerful combo attacks.",
-        "name1": "SLASH",
-        "atk1": ["basic", 15],
-        "acc1": 75,
-        "cost1": 0,
-        "name2": "DOUBLE SLASH",
-        "atk2": ["double", 8, 100, 8, 80, 8], #[move, dmg, acc, dmg2, acc2, combo dmg]
-        "acc2": 100,
-        "cost2": 6
-    },
-    "Scythe": {
-        "desc": "A scythe capable of stealing the life force of opponents.",
-        "name1": "SLASH",
-        "atk1": ["basic", 25],
-        "acc1": 80,
-        "cost1": 0,
-        "name2": "REAP",
-        "atk2": ["lifesteal", 25, 25], #[move, dmg, heal]
-        "acc2": 100,
-        "cost2": 6,
-        "name3": "RECOVER 15 MANA",
-        "atk3": ["recover", 0, "m", 15],
-        "acc3": 100,
-        "cost3": 0,
-        "name4": "RECOVER 15 STAM",
-        "atk4": ["recover", 0, "s", 15],
-        "acc4": 100,
-        "cost4": 0
-    },
-    "The Gideon": {
-        "desc": "A massive hammer with peculiar abilities.",
-        "name1": "EARTH SHATTER",
-        "atk1": ["stager", 20, 3],
+        "atk1": ["basic", 8],
+        "ele1": [e_blunt],
         "acc1": 100,
-        "cost1": 5,
-        "name2": "RECOVER 15 STAM",
-        "atk2": ["recover", 0, "s", 15],
+        "cost1": 1,
+        "name2": "HEAVY SLASH",
+        "atk2": ["basic", 11],
+        "ele2": [e_earth, e_blunt],
         "acc2": 100,
-        "cost2": 0
+        "cost2": 3,
     },
     "Dagger": {
         "desc": "A light dagger capable of modest damage with minimal stamina cost.",
+        "element": [e_blunt],
         "name1": "SLASH",
         "atk1": ["basic", 4],
+        "ele1": [e_blunt],
         "acc1": 75,
         "cost1": 0,
         "name2": "STAB",
-        "atk2": ["basic", 6],
+        "atk2": ["basic", 9],
+        "ele2": [e_blunt],
         "acc2": 90,
         "cost2": 1
     },
     "Cursed Vine Whip": {
         "desc": "Squeeze the life out of you enemies with this magical whip.",
+        "element": [e_dark, e_blunt],
         "name1": "WHIP",
         "atk1": ["basic", 8],
+        "ele1": [e_blunt],
         "acc1": 95,
         "cost1": 0,
         "name2": "CONSTRICT",
         "atk2": ["lifesteal", 8, 3], #name dmg heal
+        "ele2": [e_dark],
         "acc2": 90,
-        "cost2": 1
-    }
+        "cost2": 3
+    },
+     "Iron Sword": {
+        "desc": "A sword capable of light and heavy attacks.",
+        "element": [e_light, e_blunt],
+        "name1": "SLASH",
+        "atk1": ["basic", 8],
+        "ele1": [e_blunt],
+        "acc1": 100,
+        "cost1": 0,
+        "name2": "HEAVY SLASH",
+        "ele2": [e_light, e_blunt],
+        "atk2": ["basic", 10],
+        "acc2": 100,
+        "cost2": 3,
+    },#Area 2
+    "Dual Rapiers": {
+        "desc": "A sword capable of light and powerful combo attacks.",
+        "element": [e_blunt],
+        "name1": "SLASH",
+        "atk1": ["basic", 17],
+        "ele1": [e_blunt],
+        "acc1": 75,
+        "cost1": 0,
+        "name2": "DOUBLE SLASH",
+        "atk2": ["double", 8, 100, 8, 80, 8], #[move, dmg, acc, dmg2, acc2, combo dmg]
+        "ele2": [e_blunt],
+        "acc2": 100,
+        "cost2": 6
+    },
+    "Scythe": {
+        "desc": "A scythe capable of stealing the life force of opponents.",
+        "element": [e_dark],
+        "name1": "SLASH",
+        "atk1": ["basic", 20],
+        "ele1": [e_dark],
+        "acc1": 80,
+        "cost1": 0,
+        "name2": "REAP",
+        "atk2": ["lifesteal", 24, 8], #[move, dmg, heal]
+        "ele2": [e_dark],
+        "acc2": 100,
+        "cost2": 6,
+        "name3": "RECOVER 10 MANA",
+        "atk3": ["recover", 0, "m", 10],
+        "ele3": [e_dark],
+        "acc3": 100,
+        "cost3": 0,
+        "name4": "RECOVER 10 STAM",
+        "atk4": ["recover", 0, "s", 10],
+        "ele4": [e_dark],
+        "acc4": 100,
+        "cost4": 0
+    },
+    "The Gideon": {
+        "desc": "A massive hammer with peculiar abilities.",
+        "element": [e_light, e_blunt],
+        "name1": "EARTH SHATTER",
+        "atk1": ["stager", 20, 5],
+        "ele1": [e_light, e_blunt],
+        "acc1": 100,
+        "cost1": 5,
+        "name2": "RECOVER 15 STAM",
+        "atk2": ["recover", 0, "s", 15],
+        "ele2": [e_light],
+        "acc2": 100,
+        "cost2": 0
+    },
+    "The Blade of Pharasmanes": {
+        "desc": "The ancient blade of the original God King.",
+        "name1": "SLASH",
+        "element": [e_dark, e_blunt],
+        "atk1": ["basic", 50],
+        "ele1": [e_dark, e_blunt],
+        "acc1": 100,
+        "cost1": 0,
+        "name2": "HEAVY SLASH",
+        "atk2": ["basic", 100],
+        "ele2": [e_dark, e_blunt],
+        "acc2": 100,
+        "cost2": 10,
+    },
+    "Whet Blade": {
+        "desc": "An unassuming blade forged by the Barbarians.",
+        "name1": "SLASH",
+        "element": [e_blunt, e_earth],
+        "atk1": ["basic", 50],
+        "ele1": [e_blunt, e_earth],
+        "acc1": 80,
+        "cost1": 0,
+        "name2": "HEAVY SLASH",
+        "atk2": ["basic", 65],
+        "ele2": [e_blunt, e_earth],
+        "acc2": 100,
+        "cost2": 4,
+        "name3": "RECOVER 10 STAM",
+        "atk3": ["recover", 0, "s", 10],
+        "ele3": [e_earth],
+        "acc3": 100,
+        "cost3": 0
+    },
+    "Kraken Hunter Spear": {
+        "desc": "A spear specifically designed to hunt the Kraken.",
+        "name1": "STAB",
+        "element": [e_shock],
+        "atk1": ["basic", 25],
+        "ele1": [e_shock],
+        "acc1": 80,
+        "cost1": 0,
+        "name2": "HEAVY STAB",
+        "atk2": ["basic", 40],
+        "ele2": [e_shock],
+        "acc2": 100,
+        "cost2": 4,
+    },
+    "Kraken's Tooth": {
+        "desc": "A tooth from the mouth of the Kraken infused with water elemental powers.",
+        "element": [e_blunt, e_water],
+        "name1": "SLASH",
+        "atk1": ["basic", 50],
+        "ele1": [e_blunt, e_water],
+        "acc1": 80,
+        "cost1": 10,
+        "name2": "HEAVY SLASH",
+        "atk2": ["basic", 75],
+        "ele2": [e_blunt, e_water],
+        "acc2": 100,
+        "cost2": 20,
+        "name3": "RECOVER 45 STAM",
+        "atk3": ["recover", 0, "s", 45],
+        "ele3": [e_earth],
+        "acc3": 100,
+        "cost3": 0
+    },
+    "Solar Sabre": {
+        "desc": "A sabre that channels the power of the sun.",
+        "name1": "SLASH",
+        "element": [e_light, e_fire, e_blunt],
+        "atk1": ["basic", 16],
+        "ele1": [e_fire, e_blunt],
+        "acc1": 100,
+        "cost1": 0,
+        "name2": "HEAVY SLASH",
+        "atk2": ["basic", 50],
+        "ele2": [e_fire, e_blunt],
+        "acc2": 100,
+        "cost2": 10,
+        "name3": "SOLAR SLASH",
+        "atk3": ["basic", 75],
+        "ele3": [e_fire, e_light],
+        "acc3": 100,
+        "cost3": 12,
+        "name4": "RECOVER 45 STAM",
+        "atk4": ["recover", 0, "s", 45],
+        "ele4": [e_light],
+        "acc4": 100,
+        "cost4": 0
+    },
+    "Earth Staff": {
+        "desc": "A staff rumored to control the crust of the Earth.",
+        "name1": "STRIKE",
+        "element": [e_earth, e_blunt],
+        "atk1": ["basic", 16],
+        "ele1": [e_earth, e_blunt],
+        "acc1": 100,
+        "cost1": 0,
+        "name2": "HEAVY STRIKE",
+        "atk2": ["basic", 50],
+        "ele2": [e_earth, e_blunt],
+        "acc2": 100,
+        "cost2": 10,
+        "name3": "EARTH QUAKE",
+        "atk3": ["basic", 75],
+        "ele3": [e_earth, e_earth],
+        "acc3": 100,
+        "cost3": 15,
+        "name4": "RECOVER 45 STAM",
+        "atk4": ["recover", 0, "s", 45],
+        "ele4": [e_earth],
+        "acc4": 100,
+        "cost4": 0
+    },
+    "Dual Electric Scabbards": {
+       "desc": "An electric sword capable of light and powerful combo attacks.",
+        "element": [e_shock, e_blunt],
+        "name1": "SLASH",
+        "atk1": ["basic", 50],
+        "ele1": [e_shock, e_blunt],
+        "acc1": 100,
+        "cost1": 0,
+        "name2": "DOUBLE SLASH",
+        "atk2": ["double", 25, 100, 25, 80, 25], #[move, dmg, acc, dmg2, acc2, combo dmg]
+        "ele2": [e_shock, e_blunt],
+        "acc2": 100,
+        "cost2": 6  
+    },
 }
 
 rings = {
     "No Ring": {
         "desc": ""
+    },
+    "Loop": {
+        "desc": "Heal 999 HP, ",
+        "name1": "TOTAL HEAL",
+        "spell1": ["heal", 10000],
+        "cost1": 20,
+        "name2": "ANNIHILATION",
+        "spell2": ["annihilate"],
+        "cost2": 20,
+    },
+    "Vile Ring": {
+        "desc": "heal (100HP) or unleash a Vile curse.",
+        "name1": "VILE HEAL",
+        "spell1": ["heal", 90],
+        "cost1": 20,
+        "name2": "VILE CURSE",
+        "spell2": ["curse", 50, 10], #name, dmg, trns
+        "cost2": 20,
+    },
+    "Wyrm Toothed Ring": {
+        "desc": "heal (100HP) or poison your enemies with powerful Wyrm venom.",
+        "name1": "WYRM'S HEAL",
+        "spell1": ["heal", 100],
+        "cost1": 20,
+        "name2": "WYRM POISON",
+        "spell2": ["poison", 30, 10], #name, dmg, trns
+        "cost2": 8,
     },
     "Thorny Ring": {
         "desc": "heal (25HP) or blind your enimies with flames.",
@@ -431,7 +654,7 @@ rings = {
         "spell1": ["heal", 25],
         "cost1": 5,
         "name2": "SCOARCH",
-        "spell2": ["flame2", 10, 12], #name, dmg, acc
+        "spell2": ["flame2", 25, 12], #name, dmg, acc
         "cost2": 8,
     },
     "Soulless Circle": {
@@ -440,7 +663,7 @@ rings = {
         "spell1": ["heal", 15],
         "cost1": 2,
         "name2": "CURSE",
-        "spell2": ["curse", 10, 6], #name, dmg, turns
+        "spell2": ["curse", 20, 6], #name, dmg, turns
         "cost2": 8,
     },
     "Swamp Rot Ring": {
@@ -449,7 +672,7 @@ rings = {
         "spell1": ["heal", 8],
         "cost1": 5,
         "name2": "POISON",
-        "spell2": ["poison", 2 ,2], #name, dmg, turns
+        "spell2": ["poison", 2 ,3], #name, dmg, turns
         "cost2": 2,
     },
     "Taran's Ring": {
@@ -462,7 +685,7 @@ rings = {
         "cost2": 7,
     },
     "Worshipper's Ring": {
-        "desc": "heal (10HP) youself",
+        "desc": "heal (10HP)",
         "name1": "HEAL",
         "spell1": ["heal", 10],
         "cost1": 12
@@ -484,6 +707,8 @@ rings = {
 mobs = {
     "Error": {
         "hp": [1],
+        "rs": [e_light, e_dark, e_fire, e_water, e_earth, e_shock, e_blunt],
+        "wk": [e_light, e_dark, e_fire, e_water, e_earth, e_shock, e_blunt],
         "dg": [1],
         "ac": [1],
         "sl": [1],
@@ -491,35 +716,164 @@ mobs = {
         "ef": ["none"],
         "dp": []
     },
-    "Wraith": {
-        "hp": [75,79,69,77],
-        "dg": [8,10,10,14],
+    "Key Bearer": {
+        "hp": [500],
+        "rs": [e_light, e_earth],
+        "wk": [e_blunt, e_shock],
+        "dg": [40,40,60],
         "ac": [80],
         "sl": [250],
-        "rn": [90],
-        "ef": [("lifesteal", 4), ("steal", 20)],
-        "dp": [("The Gideon", "w", 10)]
+        "rn": [0],
+        "ef": ["none"],
+        "dp": []
     },
-    "Forest Spirit": {
-        "hp": [35,30,38,40],
-        "dg": [8,8,8,10],
+    "Nuclear Exo-Knight": {
+        "hp": [500],
+        "rs": [e_earth],
+        "wk": [e_fire, e_fire],
+        "dg": [25,25,30],
         "ac": [80],
-        "sl": [100],
-        "rn": [90],
-        "ef": ["lifesteal", 4],
-        "dp": [("Soulless Circle", "r", 30), ("The Gideon", "w", 10)]
+        "sl": [101,100,103,106],
+        "rn": [0],
+        "ef": ["none"],
+        "dp": [("Earth Staff", "w", 50)]
     },
-    "Banshee": {
-        "hp": [50],
-        "dg": [10,10,10,14],
+    "Combustion Exo-Knight": {
+        "hp": [500],
+        "rs": [e_fire],
+        "wk": [e_water, e_water],
+        "dg": [25,25,30],
         "ac": [80],
+        "sl": [101,100,103,106],
+        "rn": [0],
+        "ef": ["exo-burn"],
+        "dp": [("Solar Sabre", "w", 50)]
+    },
+    "Electric Exo-Knight": {
+        "hp": [500],
+        "rs": [e_shock],
+        "wk": [e_earth, e_earth],
+        "dg": [25,25,30],
+        "ac": [80],
+        "sl": [101,100,103,106],
+        "rn": [0],
+        "ef": ["none"],
+        "dp": [("Dual Electric Scabbards", "w", 50)]
+    },
+    "Hydro Exo-Knight": {
+        "hp": [500],
+        "rs": [e_water],
+        "wk": [e_shock, e_shock],
+        "dg": [25,26,27,28,29,30],
+        "ac": [100],
+        "sl": [101,100,103,106],
+        "rn": [0],
+        "ef": ["none"],
+        "dp": [("Loop", "r", 50)]
+    },
+    "Automaton": {
+        "hp": [100],
+        "rs": [],
+        "wk": [e_fire, e_shock, e_shock],
+        "dg": [25,25,30],
+        "ac": [80],
+        "sl": [101,100,103,106],
+        "rn": [50],
+        "ef": ["none"],
+        "dp": [("Vile Ring", "r", 20)]
+    },
+    "Kraken": {
+        "hp": [1111],
+        "rs": [e_light, e_dark, e_blunt, e_fire, e_water, e_earth],
+        "wk": [e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock, e_shock,],
+        "dg": [25,25,27,40],
+        "ac": [80],
+        "sl": [300],
+        "rn": [0],
+        "ef": ["poison"],
+        "dp": [("Kraken's Tooth", "w", 100)]
+    },
+    "Siren": {
+        "hp": [200],
+        "rs": [e_light],
+        "wk": [e_earth, e_blunt],
+        "dg": [10,10,10,10,30],
+        "ac": [75],
+        "sl": [300],
+        "rn": [0],
+        "ef": ["none"],
+        "dp": [("Kraken Hunter Spear", "w", 100)]
+    },
+    "Kraken Tentacle": {
+        "hp": [225],
+        "rs": [e_light],
+        "wk": [e_earth, e_blunt],
+        "dg": [20,20,20,30],
+        "ac": [50],
+        "sl": [300],
+        "rn": [0],
+        "ef": ["poison"],
+        "dp": []
+    },
+    "Sea Wyrm": {
+        "hp": [300],
+        "rs": [e_dark],
+        "wk": [e_light, e_blunt],
+        "dg": [20,20,20,30],
+        "ac": [100],
+        "sl": [300],
+        "rn": [20],
+        "ef": ["poison"],
+        "dp": [("Wyrm Toothed Ring", "r", 50)]
+    },
+    "Sand Trap Crater": {
+        "hp": [400],
+        "rs": [e_dark],
+        "wk": [e_light, e_blunt],
+        "dg": [10],
+        "ac": [100],
+        "sl": [350],
+        "rn": [0],
+        "ef": ["poison"],
+        "dp": []
+    },
+    "Whet Blade Barbarian": {
+        "hp": [200],
+        "rs": [e_dark],
+        "wk": [e_light, e_blunt],
+        "dg": [25,25,25,30],
+        "ac": [100],
         "sl": [200],
         "rn": [50],
-        "ef": ["curse"],
-        "dp": [("Thorny Ring", "r", 30), ("The Gideon", "w", 10)]
+        "ef": ["none"],
+        "dp": [("Whet Blade", "w", 50)]
+    },
+    "\033[93mDEMIGOD TERRIDAX\033[0m": {
+        "hp": [777],
+        "rs": [e_light],
+        "wk": [e_dark, e_dark, e_dark, e_dark],
+        "dg": [30,30,30,35],
+        "ac": [100],
+        "sl": [10000],
+        "rn": [0],
+        "ef": ["none"],
+        "dp": []
+    },
+    "\033[93mDEMIGOD OVENTUS\033[0m": {
+        "hp": [35],
+        "rs": [e_water, e_earth],
+        "wk": [e_fire, e_shock],
+        "dg": [8],
+        "ac": [100],
+        "sl": [200],
+        "rn": [0],
+        "ef": ["lifesteal", 2],
+        "dp": [("Dual Rapiers", "w", 100)]
     },
     "Reaper": {
-        "hp": [200],
+        "hp": [160],
+        "rs": [e_dark],
+        "wk": [e_light],
         "dg": [15,16,17,18,19,20,21,22,23,24,25],
         "ac": [100],
         "sl": [200],
@@ -527,53 +881,98 @@ mobs = {
         "ef": ["curse"],
         "dp": [("Scythe", "w", 100)]
     },
-    "\033[93mDEMIGOD OVENTUS\033[0m": {
-        "hp": [35],
-        "dg": [8],
-        "ac": [100],
+    "Wraith": {
+        "hp": [75,79,69,77],
+        "rs": [e_dark],
+        "wk": [e_light],
+        "dg": [8,10,10,14],
+        "ac": [80],
+        "sl": [250],
+        "rn": [90],
+        "ef": [("lifesteal", 4), ("steal", 20)],
+        "dp": [("The Gideon", "w", 10), ("Soulless Circle", "r", 40),]
+    },  
+    "Banshee": {
+        "hp": [50],
+        "rs": [e_dark],
+        "wk": [e_light],
+        "dg": [10,10,10,14],
+        "ac": [80],
         "sl": [200],
-        "rn": [0],
-        "ef": ["lifesteal", 2],
-        "dp": [("Dual Bronze Rapiers", "w", 100)]
-    },
-    "\033[93mDEMIGOD KAR'EIL\033[0m": {
-        "hp": [150],
-        "dg": [20],
-        "ac": [125],
-        "sl": [1000],
-        "rn": [0],
-        "ef": ["lifesteal", 2],
-        "dp": [("Scythe", "w", 100)]
+        "rn": [50],
+        "ef": ["curse"],
+        "dp": [("Thorny Ring", "r", 30), ("The Gideon", "w", 10)]
+    }, 
+    "Forest Spirit": {
+        "hp": [35,38,40],
+        "rs": [e_dark],
+        "wk": [e_light, e_fire, e_shock, e_blunt],
+        "dg": [8,8,8,10],
+        "ac": [80],
+        "sl": [100],
+        "rn": [90],
+        "ef": ["lifesteal", 4],
+        "dp": [("The Gideon", "w", 10)]
     },
     "Bridge Guardian": {
-        "hp": [80],
-        "dg": [15],
+        "hp": [70],
+        "rs": [],
+        "wk": [],
+        "dg": [12],
         "ac": [100],
         "sl": [50],
         "rn": [0],
         "ef": ["none"],
         "dp": []
     },
+    "\033[93mDEMIGOD KAR'EIL\033[0m": {
+        "hp": [150],
+        "rs": [e_light],
+        "wk": [e_dark],
+        "dg": [20],
+        "ac": [125],
+        "sl": [1000],
+        "rn": [0],
+        "ef": ["lifesteal", 5],
+        "dp": [("Scythe", "w", 100)]
+    },
+    "Forest Sentinel": {
+        "hp": [20,21,23],
+        "rs": [e_water, e_earth],
+        "wk": [e_fire],
+        "dg": [8,8,8,10],
+        "ac": [70],
+        "sl": [20,22,22,24,27],
+        "rn": [50],
+        "ef": ["lifesteal", 1],
+        "dp": [("Iron Sword", "w", 20)]
+    },
     "Swamp Rot Wretch": {
         "hp": [17,18,20],
+        "rs": [e_water, e_earth],
+        "wk": [e_fire, e_shock],
         "dg": [7,8,9],
         "ac": [90],
         "sl": [20,30,40],
         "rn": [50],
         "ef": ["poison"],
-        "dp": [("Swamp Rot Ring", "r", 80)]
+        "dp": [("Swamp Rot Ring", "r", 60)]
     },
     "Swamp Rot Skeleton": {
         "hp": [12],
+        "rs": [e_water, e_earth],
+        "wk": [e_fire, e_shock],
         "dg": [4,4,5],
         "ac": [75],
         "sl": [12,13,14,20],
         "rn": [100],
         "ef": ["poison"],
-        "dp": [("Swamp Rot Sword", "w", 100)]
+        "dp": [("Swamp Rot Sword", "w", 50)]
     },
     "Green Cursed Knight": {
         "hp": [30],
+        "rs": [e_blunt],
+        "wk": [e_light],
         "dg": [10],
         "ac": [100],
         "sl": [50],
@@ -583,6 +982,8 @@ mobs = {
     },
     "Bandit": {
         "hp": [12],
+        "rs": [],
+        "wk": [e_shock],
         "dg": [3,4,4],
         "ac": [90],
         "sl": [15],
@@ -592,6 +993,8 @@ mobs = {
     },
     "Skeleton": {
         "hp": [5,5,5,3,6,4],
+        "rs": [e_dark],
+        "wk": [e_light, e_blunt],
         "dg": [2, 4],
         "ac": [60],
         "sl": [3,4,5],
@@ -601,24 +1004,19 @@ mobs = {
     },
     "Scavenger": {
         "hp": [7,7,7,8,9],
+        "rs": [],
+        "wk": [],
         "dg": [4, 5],
         "ac": [60],
         "sl": [5,5,6,10],
         "rn": [90],
         "ef": ["none"],
-        "dp": [("Rusty Sword", "w", 50), ("Taran's Ring", "r", 10), ("Dual Rapier", "w", 50)]
-    },
-    "Forest Sentinel": {
-        "hp": [20,21,23],
-        "dg": [8,8,8,14],
-        "ac": [70],
-        "sl": [20,22,22,24,27],
-        "rn": [50],
-        "ef": ["lifesteal", 1],
-        "dp": [("Iron Sword", "w", 20)]
+        "dp": [("Rusty Sword", "w", 50)]
     },
     "Divine Terror": {
         "hp": [666],
+        "rs": [e_light, e_dark],
+        "wk": [],
         "dg": [6],
         "ac": [666],
         "sl": [666],
@@ -661,7 +1059,7 @@ def set_grave():
     GRAVE_SOULS = int(SOULS / 2)
 
 def die():
-    global POT, ELX, SOULS, SE, x ,y, fight, boss1, boss2, boss3, boss4
+    global POT, ELX, SOULS, SE, x ,y, fight, boss1, boss2, boss3
 
     fight = False
     deaths_increase()
@@ -678,13 +1076,12 @@ def die():
     boss1 = False
     boss2 = False
     boss3 = False
-    boss4 = False
 
 def stam_use():
     global POT, ELX, SOULS, STAM
 
     STAM -= 1
-    if STAM < 0:
+    if STAM < 0 or HP < 0:
         die()
         clear()
         divide()
@@ -723,7 +1120,6 @@ def save():
         str(boss1_dead),
         str(boss2_dead),
         str(boss3_dead),
-        str(boss4_dead),
     ]
 
     f = open("load.txt", "w")
@@ -769,6 +1165,12 @@ def recover(amount):
     else:
         STAM = STAM_MAX
 
+def preserve_mana():
+    global MANA
+
+    if MANA <= 0:
+        MANA = 0
+
 def mob_effect(effect):
     global HP, POT, ELX, SOULS, HP_MAX, MOB_HP, MOB_HPMAX
 
@@ -782,9 +1184,6 @@ def mob_effect(effect):
         else:
             SOULS = 0
             print(MOB + " stole all of your of your SOULS!")
-    elif effect == "fireball":
-        print(MOB + " cast a FIREBALL and did 15 extra damage to " + hero_name + "!")
-        HP -= 10
     elif effect == "lifesteal":
         curse = mobs[MOB]["ef"][1]
         HP -= curse
@@ -799,6 +1198,9 @@ def mob_effect(effect):
     elif effect == "burn":
         add_player_se(["burn", 2, 2])
         print(hero_name + " has been BURNED for 2 HP for 2 turns!")
+    elif effect == "exo-burn":
+        add_player_se(["burn", 4, 4])
+        print(hero_name + " has been BURNED for 4 HP for 4 turns!")
     elif effect == "curse":
         add_player_se(["curse", 10, 2, 1])
         print(hero_name + " has been CURSED for 2 HP and 1 MANA for 10 turns!")
@@ -822,7 +1224,7 @@ def draw_mob_stats():
     print("ATK: " + str(MOB_ATK[0]) + " - " + str(MOB_ATK[-1]))
 
 def death_check():
-    global cast_menu, attack_menu, WEAPON_STASH, RING_STASH, boss1_dead, boss2_dead, boss3_dead, boss4_dead, fight, boss1, boss2, boss3, boss4
+    global cast_menu, attack_menu, WEAPON_STASH, RING_STASH, boss1_dead, boss2_dead, boss3_dead, fight, boss1, boss2, boss3, key
 
     if HP <= 0:
         cast_menu = False
@@ -851,6 +1253,11 @@ def death_check():
         add_souls(MOB_SOLS)
         print("You aquired " + str(MOB_SOLS) + " SOULS from the " + MOB + "!")     
         drop_list = mobs[MOB]["dp"]
+        if MOB == "Key Bearer" and key == False:
+            clear()
+            divide()
+            print("You found a key!")
+            key = True
         for i in drop_list:
             if random.randint(1,100) < i[2]:
                 if i[1] == "w" and i[0] not in WEAPON_STASH:
@@ -865,12 +1272,9 @@ def death_check():
             boss2_dead = True
         if boss3:
             boss3_dead = True
-        if boss4:
-            boss4_dead = True
         boss1 = False
         boss2 = False
         boss3 = False
-        boss4 = False
         divide()
         input("> ")
         clear()
@@ -897,6 +1301,14 @@ def cast(s):
         print(hero_name + " did " + str(spell[1]) + " damage to " + MOB + " with their spell!")
         print(MOB + "'s accuracy has been decreased by " + str(spell[2]) + "%!")
         add_mob_se(["burn", 5, 5])
+
+    if spell[0] == "annihilate":
+        add_mob_se(["burn", 50, 50])
+        add_mob_se(["curse", 150, 150])
+        add_mob_se(["poison", 50, 50])
+        MOB_HP -= 50
+        print(hero_name + " did 50 damage to " + MOB + " with their spell!")
+
     
     if spell[0] == "burn":
         add_mob_se(spell)
@@ -906,38 +1318,78 @@ def cast(s):
     
     if spell[0] == "curse":
         add_mob_se(spell)
+
+def element_diff(elements):
+
+    total = 0
+    rs = mobs[MOB]["rs"]
+    wk = mobs[MOB]["wk"]
+    for r in rs:
+        if r in elements:
+            total += 1    
+    for w in wk:
+        if w in elements:
+            total -= 1
+    return total 
+
+def print_mob_wnr(elements):
+
+    wnr = element_diff(elements)
+    if wnr <= -2:
+        print(WEAPON + " is " + t_green + "SUPER EFFECTIVE" + t_norm + " against " + MOB + "!")
+    elif wnr == -1:
+        print(WEAPON + " is EFFECTIVE against " + MOB + "!")
+    elif wnr == 1:
+        print(WEAPON + " is WEAK against " + MOB + "!")
+    elif wnr >= 2:
+        print(WEAPON + " is " + t_red + "SUPER WEAK" + t_norm + " against " + MOB + "!")
+
+def calculate_dmg(dmg, elements):
+    ele = elements
+    total = element_diff(ele)
+    out = dmg * (1 - (.25 * total))
+    return int(out)
     
-def attack(move):
+def attack(move, elements):
     global MOB_HP, MOB_ATK, MOB_AC
+
+    ele = elements
 
     if move[0] == "none":
         pass
 
     if move[0] == "basic":
-        MOB_HP -= move[1]
-        print(hero_name + " dealt " + str(move[1]) + " damage to the " + MOB + ".")
+        
+        print_mob_wnr(ele)
+        dmg = calculate_dmg(move[1], ele)
+        MOB_HP -= dmg
+        print(hero_name + " dealt " + str(dmg) + " damage to the " + MOB + ".")
     
     if move[0] == "double":
+        print_mob_wnr(ele)
         hit1 = random.randint(1,100) < move[2]
         hit2 = random.randint(1,100) < move[4]
         if hit1:
-            MOB_HP -= move[1]
-            print(hero_name + " dealt " + str(move[1]) + " damage to the " + MOB + " with first strike.")
+            dmg = calculate_dmg(move[1], ele)
+            MOB_HP -= dmg
+            print(hero_name + " dealt " + str(dmg) + " damage to the " + MOB + " with first strike.")
         else:
             print(hero_name + " missed the first strike!")
         if hit2:
-            MOB_HP -= move[3]
-            print(hero_name + " dealt " + str(move[3]) + " damage to the " + MOB + " with second strike.")
+            dmg = calculate_dmg(move[3], ele)
+            MOB_HP -= dmg
+            print(hero_name + " dealt " + str(dmg) + " damage to the " + MOB + " with second strike.")
         else:
             print(hero_name + " missed the second strike!")
         if hit1 and hit2:
-            MOB_HP -= move[5]
-            print(hero_name + " dealt " + str(move[5]) + " extra COMBO damage to the " + MOB + ".")
+            MOB_HP -= calculate_dmg(move[5], ele)
+            print(hero_name + " dealt " + str(calculate_dmg(move[5], ele)) + " extra COMBO damage to the " + MOB + ".")
 
     if move[0] == "stager":
+        print_mob_wnr(ele)
         MOB_AC = MOB_AC * ((100 - move[2]) / 100)
-        MOB_HP -= move[1]
-        print(hero_name + " did " + str(move[1]) + " damage to " + MOB + "!")
+        MOB_HP -= calculate_dmg(move[1], ele)
+        print(hero_name + " did " + str(calculate_dmg(move[1], ele)) + " damage to " + MOB + "!")
         print(MOB + "'s accuracy has been decreased by " + str(move[2]) + "%!")
 
     if move[0] == "recover":
@@ -949,22 +1401,22 @@ def attack(move):
             print(hero_name + " recovered " + str(move[3]) + " MANA!")
     
     if move[0] == "lifesteal":
-        MOB_HP -= move[1]
+        print_mob_wnr(ele)
+        MOB_HP -= calculate_dmg(move[1], ele)
         heal(move[2])
-        print(hero_name + " stole " + str(move[2]) + " health from " + MOB + "!")
+        print(hero_name + " did " + str(calculate_dmg(move[1], ele)) + " dmg and stole " + str(move[2]) + " health from " + MOB + "!")
 
 def battle():
     global fight, HP, POT, ELX, SOULS, MANA, STAM, MOB_HP, MOB_HPMAX, MOB_ATK, MOB_SOLS, MOB_AC, MOB, SE, MOB_SE
 
-    if DEATHS == 0 or DEATHS % 13 == 0:
-        MOB = "Divine Terror"
-    elif boss1:
+    
+    if boss1:
         MOB = "\033[93mDEMIGOD OVENTUS\033[0m"
     elif boss2:
         MOB = "\033[93mDEMIGOD KAR'EIL\033[0m"
     elif boss3:
-        MOB = "Divine Terror"
-    elif boss4:
+        MOB = "\033[93mDEMIGOD TERRIDAX\033[0m"
+    elif DEATHS == -1:
         MOB = "Divine Terror"
     else:
         MOB = random.choice(biome[map[y][x]]["m"])
@@ -1035,7 +1487,10 @@ def battle():
                     try:
                         print(str(i) + " - " + weapons[WEAPON][("name" + str(i))] + " - (", end="")
                         print(str(weapons[WEAPON][("atk" + str(i))][1]) + " ATK) - (", end="")
-                        print(str(weapons[WEAPON][("cost" + str(i))]) + " STAM)")
+                        print(str(weapons[WEAPON][("cost" + str(i))]) + " STAM) - ", end="")
+                        for i in (weapons[WEAPON][("ele" + str(i))]):    
+                            print(i, end=" ")
+                        print("")
                     except:
                         pass
                 print("Q - BACK")
@@ -1047,7 +1502,7 @@ def battle():
                         if STAM >= weapons[WEAPON]["cost" + choice]:
                             STAM -= weapons[WEAPON]["cost" + choice]
                             if random.randint(1,100) < weapons[WEAPON]["acc" + choice]:
-                                attack(weapons[WEAPON]["atk" + choice])
+                                attack(weapons[WEAPON]["atk" + choice], weapons[WEAPON]["ele" + choice])
                             else:
                                 print(hero_name + " missed!")
                             update_player_se()
@@ -1161,14 +1616,15 @@ def update_player_se():
         if e[0] == "poison":
             HP -= e[2]
             print(hero_name + " took " + str(e[2]) + " damage from being poisoned.")
-        elif e[0] == "burn":
+        if e[0] == "burn":
             HP -= e[2]
             print(hero_name + " took " + str(e[2]) + " damage from being burned.")
-        elif e[0] == "curse":
+        if e[0] == "curse":
             HP -= e[2]
             MANA -= e[3]
             print(hero_name + " took " + str(e[2]) + " damage and had " + str(e[3]) + " mana drained from being cursed.")
     
+    preserve_mana()
     
     for i in range(len(SE)):
         if SE[i][1] <= 1:
@@ -1183,10 +1639,10 @@ def update_mob_se():
         if e[0] == "poison":
             MOB_HP -= e[2]
             print(MOB + " took " + str(e[2]) + " damage from being poisoned.")
-        elif e[0] == "burn":
+        if e[0] == "burn":
             MOB_HP -= e[2]
             print(MOB + " took " + str(e[2]) + " damage from being burned.")
-        elif e[0] == "curse":
+        if e[0] == "curse":
             MOB_HP -= e[2]
             print(MOB + " took " + str(e[2]) + " damage from being cursed.")
 
@@ -1211,10 +1667,10 @@ def hideout():
         divide()
         draw_stats()
         divide()
-        print("1 - WEAPON STASH - (" + str(len(WEAPON_STASH)) + " ITEMS)")
-        print("2 - RING STASH   - (" + str(len(RING_STASH)) +  " ITEMS)")
-        print("3 - CRAFT POTION - (10 SOULS)")
-        print("4 - CRAFT ELIXER - (10 SOULS)")
+        print("1 - WEAPON STASH  - (" + str(len(WEAPON_STASH)) + " ITEMS)")
+        print("2 - RING STASH    - (" + str(len(RING_STASH)) +  " ITEMS)")
+        print("3 - CRAFT POTION  - (10 SOULS)")
+        print("4 - CRAFT ELIXER  - (10 SOULS)")
         LVL_COST = (int(pow(float(LVL), 1.1)) + 10)
         print("5 - LEVEL UP HP   - (%d SOULS)" % LVL_COST)
         print("6 - LEVEL UP MANA - (%d SOULS)" % LVL_COST)
@@ -1234,7 +1690,11 @@ def hideout():
                 print("Which weapon would you like to equip?")
                 divide()
                 for wep in range(len(WEAPON_STASH)):
-                    print(str(wep + 1) + " - " + WEAPON_STASH[wep] + " - (" + str(weapons[WEAPON_STASH[wep]]["atk1"][1])  + " ATK)")
+                    print(str(wep + 1) + " - " + WEAPON_STASH[wep] + 
+                            " - (" + str(weapons[WEAPON_STASH[wep]]["atk1"][1])  + " ATK) - ", end="")
+                    for ele in weapons[WEAPON_STASH[wep]]["element"]:
+                        print(ele + " ", end="")
+                    print("")
                 print("Q - BACK")
                 
                 wep_choice = input("# ").upper()
@@ -1325,59 +1785,14 @@ def hideout():
             print("Leaving the hideout...")
             input("> ")
 
-def king():
-    global speak, key
-
-    while speak:
-        clear()
-        divide()
-        print("Hello there, " + hero_name + "!")
-        if weapons[WEAPON]["atk1"] < 10:
-            print("You're not strong enough! The Evil Wizard will burn you alive!")
-            print("Keep sharpening your skills!")
-            key = False
-        else:
-            print("This will let you into the Academy! Slay the Wizard!")
-            print("Received: KEY")
-            key = True
-        
-        divide()
-        print("1 - LEAVE")
-        divide()
-        choice = input("# ")
-        if choice == "1":
-            speak = False
-
-def academy():
-    global boss, key, fight
-
-    while boss:
-        clear()
-        divide()
-        print("You approach the gates of the Academy")
-        print("The gates require a key. What will you do?")
-        divide()
-        if key:
-            print("1 - USE KEY")
-        print("2 - TURN BACK")
-        divide()
-
-        choice = input("# ")
-
-        if choice == "1" and key:
-            fight = True
-            battle()
-        elif choice == "2":
-            boss = False
-
 def pegasus1():
     global peg1, x, y
 
     while peg1:
-        if boss2_dead:
+        if boss2_dead and boss1_dead:
             clear()
             divide()
-            slow_type(hero_name + ", you've freed me from Kar'iel's prison.")
+            slow_type(hero_name + ", you've freed me from Kar'eil's prison.")
             slow_type("Allow me to take you to the foot of the Inner Court's Castle?")
             divide()
             print("1 - Accept")
@@ -1392,22 +1807,43 @@ def pegasus1():
                 slow_type("You climb ontop of the Nobel Beast.")
                 slow_type("You both rise far above the Mausoleum.")
                 slow_type("A massive castle is on the horizon...")
-                x = 12
-                y = 13
+                x = 21
+                y = 1
                 peg1 = False
+                divide()
+                input("> ")
             elif choice == "2":
                 peg1 = False
         else:
             clear()
             divide()
             slow_type(hero_name + ", my name is Jerri. My kind is known by many names...")
-            slow_type("But the most accurate description is probably a Pegasus.")
+            slow_type("But the most accurate name your kind has is Pegasus.")
             slow_type("I have no steak in the Humans' futile wars...")
             slow_type("But if you can release me from this prison...")
+            slow_type("By defeating both Demigods that control the lower lands...")
             slow_type("I will be able to assist you on your journey.")
             divide()
             input("> ")
             peg1 = False
+
+def open_chest1():
+    global chest1
+
+    while chest1:
+        clear()
+        divide()
+        if key:
+            slow_type(hero_name + " found The Blade of Pharasmanes!")
+            divide()
+            input("> ")
+            WEAPON_STASH.append("The Blade of Pharasmanes")
+            chest1 = False
+        else:
+            slow_type("You need a key to open this chest!")
+            divide()
+            input("> ")
+            chest1 = False
 
 def fight_boss1():
     global boss1, fight
@@ -1455,6 +1891,7 @@ def fight_boss2():
         clear()
         divide()
         slow_type("The silence is deafening...")
+        divide()
         print("1 - DESCEND INTO THE MAUSOLEUM")
         print("2 - TURN BACK")
         divide()
@@ -1464,7 +1901,7 @@ def fight_boss2():
         if choice == "1":
             clear()
             divide()
-            slow_type("So, Parasmanes... I hear you go by " + hero_name + " now...")
+            slow_type("So, Pharasmanes... I hear you go by " + hero_name + " now...")
             slow_type("Simply changing your name cannot absolve you of your past sins.")
             divide()
             input("> ")
@@ -1483,7 +1920,7 @@ def fight_boss2():
             clear()
             divide()
             slow_type("The penance for your sins is death.")
-            slow_type("Let it be I, Kar'iel the Harvester, who facilitates your repentance!")
+            slow_type("Let it be I, Kar'eil the Harvester, who facilitates your repentance!")
             slow_type("I will cull you as many times as it takes!")
             divide()
             input("> ")
@@ -1498,39 +1935,39 @@ def fight_boss3():
     while boss3:
         clear()
         divide()
-        slow_type("")
-        print("1 - ENTER KEEP")
+        print("1 - ENTER CLONING CHAMBER")
         print("2 - TURN BACK")
         divide()
 
         choice = input("# ")
 
         if choice == "1":
-            slow_type("")
+            clear()
+            divide()
+            slow_type("You enter the cloning chamber.")
+            slow_type("Tubes of green liquid contain dozens of suspended bodies")
+            slow_type("Each one identical to the last.")
+            slow_type("You continue down the artificially lit path")
+            slow_type("A dark figure with small stature stands surround by")
+            slow_type("glowing walls with moving pictures on them...")
+            divide()
+            input("> ")
+            clear()
+            divide()
+            slow_type("Parasmanes, don't act suprised.")
+            slow_type("You were the one who built all of these.")
+            slow_type("Your \"immortality\" was never anything more than simple clones")
+            slow_type("A parlor trick that allowed you to enslave a nation.")
+            slow_type("It pains me that I helped you perfect the cloning process")
+            slow_type("However, I refuse to pontificate...")
+            slow_type("NOW DIE!")
+            divide()
+            input("> ")
+            clear()
             fight = True
             battle()
         elif choice == "2":
             boss3 = False
-
-def fight_boss4():
-    global boss4, fight
-
-    while boss4:
-        clear()
-        divide()
-        slow_type("")
-        print("1 - ENTER KEEP")
-        print("2 - TURN BACK")
-        divide()
-
-        choice = input("# ")
-
-        if choice == "1":
-            slow_type("")
-            fight = True
-            battle()
-        elif choice == "2":
-            boss4 = False
 
 def draw_map():
     global SEEN_TILES
@@ -1565,12 +2002,12 @@ def draw_map():
 
     header()
     divide()
-    print("\u250C", end="")
+    print("X", end="")
     for i in range(14):
-        print("\u2500", end="")
-    print("\u2510")
+        print("-", end="")
+    print("X")
     for r in range(y - 3,y + 4):
-        print("\u2502", end="")
+        print("|", end="")
         for c in range(x - 3,x + 4):
             if r == y and c == x:
                 print("@", end = " ")
@@ -1580,11 +2017,11 @@ def draw_map():
                 print(biome[map[r][c]]["d"], end = " ")
             else:
                 print("  ", end="")
-        print("\u2502")
-    print("\u2514", end="")
+        print("|")
+    print("X", end="")
     for i in range(14):
-        print("\u2500", end="")
-    print("\u2518")
+        print("-", end="")
+    print("X")
 
 def draw_stats():
     for i in range(16):
@@ -1603,16 +2040,16 @@ def draw_stats():
 
     for i in range (16):
         if i/16 < MANA/MANA_MAX:
-            print("\033[34m\u2588\033[0m", end="")
+            print(t_blue + "\u2588" + t_norm, end="")
         else:
-            print("\033[34m_\033[0m", end="")
+            print(t_blue + "_" + t_norm, end="")
     print("  MANA: " + str(MANA) + "/" + str(MANA_MAX))
 
     for i in range(16):
         if i/16 < STAM/STAM_MAX:
-            print("\033[92m\u2588\033[0m", end="")
+            print(t_green + "\u2588" + t_norm, end="")
         else:
-            print("\033[92m_\033[0m", end="")
+            print(t_green + "_" + t_norm, end="")
     print("  STAM: " + str(STAM) + "/" + str(STAM_MAX))
 
     print("POTIONS: ", end="")
@@ -1625,9 +2062,9 @@ def draw_stats():
     print("ELIXERS: ", end="")
     for i in range(4):
         if i < ELX:
-            print("\033[34m[]\033[0m ", end="")
+            print(t_blue + "[] " + t_norm, end="")
         else:
-            print(t_gray + "[]\033[0m ", end="")
+            print(t_gray + "[] " + t_norm, end="")
     print()
     print("SOULS: " + str(SOULS)) 
  
@@ -1644,11 +2081,13 @@ def draw_actions():
         print("3 - use POTION")
     if ELX > 0:
         print("4 - use ELIXER")
-    if (map[y][x] == "$" or map[y][x] == "K" or
-        (map[y][x] == "1" and not boss1_dead) or
+    if ((map[y][x] == "1" and not boss1_dead) or
         (map[y][x] == "2" and not boss2_dead) or
-        map[y][x] == "H" or map[y][x] == "p"):
+        (map[y][x] == "3" and not boss3_dead) or
+        map[y][x] == "H" or map[y][x] == "P"):
         print("E - ENTER")
+    if map[y][x] == "$":
+        print("E - OPEN")
     print("0 - SAVE AND QUIT")
 
 def slow_type(t):
@@ -1659,8 +2098,9 @@ def slow_type(t):
     print('')
 
 def check_dialogue():
+    global fight, play, run, menu
 
-    if DEATHS == 1:
+    if DEATHS == 0:
         die()
         clear()
         divide()
@@ -1696,7 +2136,6 @@ def check_dialogue():
         slow_type("Oventus the Broken...")
         slow_type("Kar'eil the Harvester...")
         slow_type("BOSS3")
-        slow_type("BOSS4")
         slow_type("Betrayed your majesty and turned your Divine Tower to ruins!")
         divide()
         input("> ")
@@ -1733,6 +2172,16 @@ def check_dialogue():
         divide()
         input("> ")
         clear()
+
+    if boss1_dead and boss2_dead and boss3_dead:
+        fight = False
+        play = False
+        menu = True
+        clear()
+        divide()
+        slow_type("You have defeated The Inner Court, and you may now take your place as God King!")
+        divide()
+        input("> ")
 
 while run:
     while menu:
@@ -1778,7 +2227,7 @@ while run:
             RING_STASH = [START_RING]
             SPAWN = START_SPAWN
             SE = START_SE
-            DEATHS = 0
+            DEATHS = -1
 
             select = True
             while select:
@@ -1841,7 +2290,6 @@ while run:
                     boss1_dead = ast.literal_eval(load_list[25])
                     boss2_dead = ast.literal_eval(load_list[26])
                     boss3_dead = ast.literal_eval(load_list[27])
-                    boss4_dead = ast.literal_eval(load_list[28])
                     
                     clear()
                     print(hero_name, ": HP =", HP, "MANA = ", MANA, "STAM = ", STAM, "SOULS =", SOULS)
@@ -1885,6 +2333,7 @@ while run:
             MANA = MANA_MAX
             STAM = STAM_MAX
             SPAWN = [x ,y]
+            SE = []
         
         #Mob spawn mechanic
         if not standing and random.randint(1, 100) <= biome[map[y][x]]["e"]:
@@ -1956,9 +2405,6 @@ while run:
             standing = True
 
         elif dest == "E":
-            if map[y][x] == "K":
-                speak = True
-                king()
             if map[y][x] == "1" and not boss1_dead:
                 boss1 = True
                 fight_boss1()
@@ -1967,15 +2413,15 @@ while run:
                 fight_boss2()
             if map[y][x] == "3" and not boss3_dead:
                 boss3 = True
-                fight_boss3()
-            if map[y][x] == "4" and not boss4_dead:
-                boss4 = True
-                fight_boss4()                
+                fight_boss3()             
             if map[y][x] == "H":
                 hiding = True
                 hideout()
-            if map[y][x] == "p":
+            if map[y][x] == "P":
                 peg1 = True
                 pegasus1()
+            if map[y][x] == "$":
+                chest1 = True
+                open_chest1()
         else:
             standing = True
