@@ -2135,7 +2135,7 @@ def check_dialogue():
         slow_type("However, a few centuries ago, the inner members of your court...")
         slow_type("Oventus the Broken...")
         slow_type("Kar'eil the Harvester...")
-        slow_type("BOSS3")
+        slow_type("Teriday the Kepper")
         slow_type("Betrayed your majesty and turned your Divine Tower to ruins!")
         divide()
         input("> ")
