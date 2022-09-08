@@ -2127,7 +2127,7 @@ def check_dialogue():
         divide()
         slow_type("When your physical body deteriorated")
         slow_type("or suffered mortal wounds, another vessel was provided.")
-        slow_type("Your Soul was transfered within seconds, and your rule could continue.")
+        slow_type("Your Soul was transferred within seconds, and your rule could continue.")
         divide()
         input("> ")
         clear()
