@@ -1085,6 +1085,7 @@ def stam_use():
         die()
         clear()
         divide()
+        print("YOUR STAMINA REACHED 0!")
         print("YOU DIED FROM EXHAUSTION!")
         divide()
         input("> ")
