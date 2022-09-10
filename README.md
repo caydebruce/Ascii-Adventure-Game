@@ -1,6 +1,11 @@
-# Ascii Adventure
-ascii rpg game
+# Getting Started
 
+Navigate to the Ascii-Adventure-Game directory then execute
+```
+python3 mortalwounds.py
+```
+
+# Features
 This program is a simple ascii art adventure game playble through the terminal on your computer!
 
 To run this program just download the files from my github and use the .exe file to run the game from anywhere on your computer
