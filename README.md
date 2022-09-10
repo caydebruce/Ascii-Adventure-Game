@@ -25,6 +25,9 @@ python3 mortalwounds.py
 Just because this is a game played in the console, that doesn't mean you have to rush to complete it!
 Feel free to enjoy the open world without risk of losing your progress.
 
+### Support for Windows or MacOS!
+When creating a new chracter, make sure to indicate what OS you are using!
+
 
 
 # Purpose
