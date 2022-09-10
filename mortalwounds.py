@@ -2073,7 +2073,7 @@ def draw_actions():
     if y > 0:
         print("W - ^ " + biome[map[y - 1][x]]["t"])
     if x > 0:
-        print("A - > " + biome[map[y][x - 1]]["t"])
+        print("A - < " + biome[map[y][x - 1]]["t"])
     if y < y_len:
         print("S - v " + biome[map[y + 1][x]]["t"])
     if x < x_len:
