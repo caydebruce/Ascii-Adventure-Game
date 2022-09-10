@@ -5,6 +5,7 @@ Navigate to the Ascii-Adventure-Game directory then execute
 python3 mortalwounds.py
 ```
 
+
 # Features
 This program is a simple ascii art adventure game playble through the terminal on your computer!
 
@@ -32,6 +33,10 @@ This program is a simple ascii art adventure game playble through the terminal o
 
 
 ## A full save profile feature for longer play sessions!
+Just because this is a game played in the console, that doesn't mean you have to rush to complete it!
+Feel free to enjoy the open world without risk of losing your progress.
+
+
 
 # Purpose
 
