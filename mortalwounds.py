@@ -2071,13 +2071,13 @@ def draw_stats():
  
 def draw_actions():
     if y > 0:
-        print("W - \u25B2 " + biome[map[y - 1][x]]["t"])
+        print("W - ^ " + biome[map[y - 1][x]]["t"])
     if x > 0:
-        print("A - \u25C0 " + biome[map[y][x - 1]]["t"])
+        print("A - > " + biome[map[y][x - 1]]["t"])
     if y < y_len:
-        print("S - \u25BC " + biome[map[y + 1][x]]["t"])
+        print("S - v " + biome[map[y + 1][x]]["t"])
     if x < x_len:
-        print("D - \u25B6 " + biome[map[y][x + 1]]["t"])
+        print("D - > " + biome[map[y][x + 1]]["t"])
     if POT > 0:
         print("3 - use POTION")
     if ELX > 0:
